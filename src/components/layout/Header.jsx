@@ -30,6 +30,12 @@ export function Header({ userId, onLogout }) {
 
     const tick = () => {
       const diff = expiry.getTime() - Date.now()
+      const second = (diff / 1000).toFixed(0);
+
+      if(second == 0){
+        navigate('/login')   
+      }
+
       setCountdown(formatDuration(diff))
     }
 

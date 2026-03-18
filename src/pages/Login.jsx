@@ -16,7 +16,7 @@ export default function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
-
+    console.log(id, password);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -28,8 +28,12 @@ export default function Login() {
 
       if (response.ok) {
         const data = await response.json()
-        setToken(data.token) // Assuming the response has a token field
+        
+        //2.상태 업데이트 (전역 상태용)
+        setToken(data.token)
         setUserId(id)
+        
+        //3. 페이지 이동
         navigate('/main')
       } else {
         const errorData = await response.json()

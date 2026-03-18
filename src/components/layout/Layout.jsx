@@ -25,9 +25,9 @@ export function Layout() {
         <Aside />
 
         {/* 3. 오른쪽 메인 콘텐츠 영역 */}
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-[1600px] mx-auto bg-white rounded-xl shadow-sm min-h-full p-6">
-            {/* ⭐ 이 자리에 UserManagement.jsx 내용이 렌더링됩니다 */}
+        <main className="flex-1 overflow-y-auto p-2">
+          <div className="max-w-[1800px] mx-auto bg-white rounded-xl shadow-sm min-h-full p-2">
+
             <Outlet />
           </div>
         </main>
@@ -36,18 +36,6 @@ export function Layout() {
       {/* 4. 하단 푸터 */}
       <Footer />
     </div>  
-
-
-    // <div className="flex h-screen">
-    //   {/* 고정된 사이드바 */}
-    //   <Aside />
-      
-    //   {/* 내용이 바뀌는 콘텐츠 영역 */}
-    //   <main className="flex-1 overflow-y-auto p-4">
-    //     <Outlet /> 
-    //   </main>
-    // </div>
-
   );
 };
 
