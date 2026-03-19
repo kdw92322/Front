@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { FaSignOutAlt } from 'react-icons/fa'
 import { getTokenExpiry } from '@/lib/auth'
 import { useNavigate } from 'react-router-dom';
+import { removeToken } from '@/lib/auth'
 
 const formatDuration = (ms) => {
   if (ms <= 0) return '00:00:00'
@@ -33,7 +34,8 @@ export function Header({ userId, onLogout }) {
       const second = (diff / 1000).toFixed(0);
 
       if(second == 0){
-        navigate('/login')   
+        removeToken();
+        navigate('/login')
       }
 
       setCountdown(formatDuration(diff))

@@ -12,11 +12,13 @@ import { MenuManagement } from '@/pages/sys/MenuManagement'
 import { LinkManagement } from '@/pages/sys/LinkManagement'
 import { TermsManagement } from '@/pages/sys/TermsManagement'
 import { CodeManagement } from '@/pages/sys/CodeManagement'
+import { CodeGrpManagement } from '@/pages/sys/CodeGrpManagement'
 import { BoardManagement } from '@/pages/sys/BoardManagement'
 import Layout from '@/components/layout/Layout.jsx'
 import ProtectedRoute from '@/components/layout/ProtectedRoute.jsx'
 
 export default function App() {
+  const token = localStorage.getItem('authToken');
 
   return (
     <Router>
@@ -30,8 +32,9 @@ export default function App() {
             <Route path="/link" element={<LinkManagement />} />
             <Route path="/terms" element={<TermsManagement />} />
             <Route path="/code" element={<CodeManagement />} />
+            <Route path="/codeGroup" element={<CodeGrpManagement />} />
             <Route path="/boardMng" element={<BoardManagement />} />
-            <Route path="/" element={<Navigate to="/main" replace />} />
+            <Route path="/" element={<Navigate to={token ? "/main" : "/login"} replace />} />
           </Route>
         </Route>
 

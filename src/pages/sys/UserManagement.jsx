@@ -4,7 +4,8 @@ import { useReactTable, getCoreRowModel } from '@tanstack/react-table';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { API_BASE_URL } from '@/lib/config'
+import { API_BASE_URL } from '@/lib/config';
+import GridTable from '@/components/layout/GridTable';
 import axios from '../../lib/axios';
 
 const initialUsers = [
@@ -16,10 +17,12 @@ const initialUsers = [
 ]
 
 export function UserManagement() {
-  const [users, setUsers] = useState(initialUsers)
-  const [filter, setFilter] = useState({ query: '', role: 'All', status: 'All' })
-  const [selected, setSelected] = useState([])
-  const [editing, setEditing] = useState(selected)
+  const [users, setUsers] = useState(initialUsers);
+  const [filter, setFilter] = useState({ query: '', role: 'All', status: 'All' });
+  const [selected, setSelected] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(selected);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     setEditing(selected)
@@ -38,15 +41,15 @@ export function UserManagement() {
 
   const columns = useMemo(
     () => [
-      { accessorKey: 'name', header: '이름' },
-      { accessorKey: 'email', header: '이메일' },
-      { accessorKey: 'role', header: '역할' },
-      { accessorKey: 'status', header: '상태' },
-      { accessorKey: 'phone', header: '전화번호' },
+      { accessorKey: 'name', header: '이름', size:20 },
+      { accessorKey: 'email', header: '이메일', size:20 },
+      { accessorKey: 'role', header: '역할', size:20 },
+      { accessorKey: 'status', header: '상태', size:20 },
+      { accessorKey: 'phone', header: '전화번호', size:20},
     ],
     []
   )
-
+  
   const table = useReactTable({
     data: filteredUsers,
     columns,
@@ -70,14 +73,20 @@ export function UserManagement() {
   const search = async () => {
     try {
         const response = await axios.get(`${API_BASE_URL}/user/select`, { params: filter })
-
         setUsers(response.data);
-        return response.data;
+        //return response.data;
     } catch (error) {
       console.error('검색 중 오류:', error)
-      return [];
+      //return [];
     }
   }
+
+  const handleRowClick = (rowData) => {
+    console.log("클릭된 데이터:", rowData);
+    setSelectedId(rowData.id); // 선택된 ID 저장 (하이라이트용)
+    setEditing({ ...rowData });
+    
+  };
 
   return (
     <main className="h-full overflow-y-auto p-3 scrollbar-hidden">
@@ -142,41 +151,7 @@ export function UserManagement() {
             <CardDescription>{filteredUsers.length}건</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="max-h-[calc(100vh-30rem)] overflow-y-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-600">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <tr key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <th key={header.id} className="px-3 py-2 font-semibold">
-                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody>
-                  {table.getRowModel().rows.map((row) => {
-                    const user = row.original
-                    return (
-                      <tr
-                        key={row.id}
-                        onClick={() => setSelected(user)}
-                        className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${
-                          selected?.id === user.id ? 'bg-slate-100 font-semibold' : ''
-                        }`}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-3 py-2 align-middle">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <GridTable columns={columns} data={users} isLoading={loading} onRowClick={handleRowClick} selectedRowId={selectedId} />
           </CardContent>
         </Card>
 
@@ -186,65 +161,99 @@ export function UserManagement() {
             {/* <CardDescription>그리드에서 행을 클릭하면 이곳에 상세 정보가 표시됩니다.</CardDescription> */}
           </CardHeader>
           <CardContent>
-            {!editing ? (
-              <p className="text-sm text-slate-500">사용자를 선택해주세요.</p>
-            ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">이름</label>
-                  <Input
-                    value={editing.name}
-                    onChange={(e) => onInputChange('name', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">이메일</label>
-                  <Input
-                    type="email"
-                    value={editing.email}
-                    onChange={(e) => onInputChange('email', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">역할</label>
-                  <select
-                    value={editing.role}
-                    onChange={(e) => onInputChange('role', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all cursor-pointer"
-                  >
-                    <option>Admin</option>
-                    <option>Manager</option>
-                    <option>User</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">상태</label>
-                  <select
-                    value={editing.status}
-                    onChange={(e) => onInputChange('status', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all cursor-pointer"
-                  >
-                    <option>Active</option>
-                    <option>Inactive</option>
-                  </select>
-                </div>
-                <div className="lg:col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-slate-700">전화번호</label>
-                  <Input
-                    value={editing.phone}
-                    onChange={(e) => onInputChange('phone', e.target.value)}
-                  />
-                </div>
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm transition-all">
+              {/* 헤더 영역 */}
+              <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+                <h3 className="text-base font-semibold text-slate-800">상세 정보 편집</h3>
               </div>
-            )}
 
-            <div className="mt-10 flex justify-end gap-2">
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => console.log("저장")}>
-                저장
-              </Button>
-              <Button size="sm" className="bg-red-600 hover:bg-blue-700 text-white" onClick={() => console.log("삭제")}>
-                삭제
-              </Button>
+              <div className="p-6">
+                {!editing ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                      <svg xmlns="http://www.w3.org" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium text-slate-500">목록에서 사용자를 선택해주세요.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-x-6 gap-y-5 lg:grid-cols-2">
+                    {/* 이름 */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">이름</label>
+                      <Input
+                        className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                        value={editing.name || ''}
+                        onChange={(e) => onInputChange('name', e.target.value)}
+                        placeholder="이름을 입력하세요"
+                      />
+                    </div>
+
+                    {/* 이메일 */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">이메일</label>
+                      <Input
+                        type="email"
+                        className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                        value={editing.email || ''}
+                        onChange={(e) => onInputChange('email', e.target.value)}
+                        placeholder="example@mail.com"
+                      />
+                    </div>
+
+                    {/* 역할 (Select) */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">역할</label>
+                      <select
+                        value={editing.role || ''}
+                        onChange={(e) => onInputChange('role', e.target.value)}
+                        className="block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
+                      >
+                        <option value="Admin">Admin</option>
+                        <option value="Manager">Manager</option>
+                        <option value="User">User</option>
+                      </select>
+                    </div>
+
+                    {/* 상태 (Select) */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">상태</label>
+                      <select
+                        value={editing.status || ''}
+                        onChange={(e) => onInputChange('status', e.target.value)}
+                        className="block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+
+                    {/* 전화번호 (전체 너비) */}
+                    <div className="space-y-1.5 lg:col-span-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">전화번호</label>
+                      <Input
+                        className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                        value={editing.phone || ''}
+                        onChange={(e) => onInputChange('phone', e.target.value)}
+                        placeholder="010-0000-0000"
+                      />
+                    </div>
+
+                    {/* 하단 버튼 영역 */}
+                    <div className="mt-2 flex justify-end gap-2 lg:col-span-2">
+                      <button className="bg-red-600 rounded-md px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors">
+                        삭제
+                      </button>
+                      <button className="bg-green-600 rounded-md px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:ring-4 focus:ring-green-200 transition-all">
+                        저장
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

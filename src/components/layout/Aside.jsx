@@ -10,6 +10,7 @@ export function Aside() {
         { name: '사용자 관리', path: '/users' },
         { name: '권한 관리', path: '/auth' },
         { name: '메뉴 관리', path: '/menu' },
+        { name: '코드그룹 관리', path: '/codeGroup' },
         { name: '코드 관리', path: '/code' },
         // { name: '링크 관리', path: '/link' },
         // { name: '용어/약어 관리', path: '/terms' },

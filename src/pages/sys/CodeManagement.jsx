@@ -1,125 +1,135 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { flexRender } from '@tanstack/react-table';
-import { useReactTable, getCoreRowModel } from '@tanstack/react-table';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, } from '@/components/ui/card';
+import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { API_BASE_URL } from '@/lib/config'
 import axios from '../../lib/axios';
+import GridTable from '@/components/layout/GridTable';
 
 export function CodeManagement() {
     const [filter, setFilter] = useState({});
+    const [codes, setCodes] = useState([]);
+    const [codeDtls, setCodeDtls] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [selected, setSelected] = useState(null);
+    const [editing, setEditing] = useState(selected);
+    const [selectedId, setSelectedId] = useState(null);
 
-    const columns = useMemo(
-        () => [
-          { accessorKey: 'name', header: '이름', size:20 },
-          { accessorKey: 'email', header: '이메일', size:20 },
-          { accessorKey: 'role', header: '역할', size:20 },
-          { accessorKey: 'status', header: '상태', size:20 },
-          { accessorKey: 'phone', header: '전화번호', size:20 },
-        ],
-      []
-    )
+    useEffect(() => {
+        setEditing(selected)
+    }, [selected])
     
-    const table = useReactTable({
-      data: [],
-      columns,
-      getCoreRowModel: getCoreRowModel(),
-    })
+    const onInputChange = (key, value) => {
+      setEditing((prev) => ({ ...prev, [key]: value }))
+    }  
+
+    const searchCondInit = () => {
+      setFilter({ mst_nm: '', mst_cd: '' })
+    } 
+
+    const search = async () => {
+      try {
+          const response = await axios.get(`${API_BASE_URL}/code/select`, { params: filter })
+          //console.log(response.data);
+          setCodes(response.data);
+          //return response.data;
+      } catch (error) {
+        console.error('검색 중 오류:', error)
+        //return [];
+      }
+    }
+
+    const mst_columns = [
+      { accessorKey: 'mst_cd', header: '코드그룹', size: 1 },    // 1의 비율
+      { accessorKey: 'mst_nm', header: '코드그룹명', size: 2 },  // 3의 비율 (3배 넓음)
+    ];
+
+    const dtl_columns = [
+      { accessorKey: 'mst_cd', header: '코드그룹', size: 1 },    // 1의 비율
+      { accessorKey: 'dtl_cd', header: '코드', size: 1 },    // 1의 비율
+      { accessorKey: 'dtl_nm', header: '코드명', size: 2 },  // 3의 비율 (3배 넓음)
+      { accessorKey: 'use_yn', header: '사용 여부', size: 1 },
+      { accessorKey: 'remark', header: '비고', size: 2 },
+      { accessorKey: 'attr1', header: '속성1', size: 1 },
+      { accessorKey: 'attr2', header: '속성2', size: 1 },
+      { accessorKey: 'attr3', header: '속성3', size: 1 },
+    ];
+    
+    const handleMstRowClick = (rowData) => {
+      setSelected(rowData.mst_cd); // 선택된 데이터 저장 (하이라이트용)
+      setSelectedId(rowData.mst_cd); // 선택된 ID 저장 (하이라이트용)
+    }
+    
+    const handleDtlRowClick = (rowData) => {
+      
+    }
 
     return (
-        <main className="h-full overflow-y-auto p-3 scrollbar-hidden">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                  <div>
-                    <CardTitle>조회 조건</CardTitle>
-                  </div>
-                  {/* 오른쪽 영역 (버튼 등 추가) */}
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => {}}>
+      <main className="h-full overflow-y-auto p-3 scrollbar-hidden">
+            <div className="flex items-center justify-between mb-4">
+                <div>
+                  <CardTitle>코드관리</CardTitle>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => searchCondInit()}>
                       초기화
                     </Button>
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => search()}>
                       조회
                     </Button>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => search()}>
+                      저장
+                    </Button>
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => search()}>
+                      삭제
+                    </Button>
+                </div>
+            </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+                <div>
+                  <CardTitle className="text-lg font-semibold">조회조건</CardTitle>
+                </div>
+              </CardHeader>  
+              <CardContent>
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹</label>
+                    <Input
+                      value={filter.mst_cd}
+                      onChange={(e) => setFilter((prev) => ({ ...prev, mst_cd: e.target.value }))}
+                    />
                   </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹명</label>
+                    <Input
+                      value={filter.mst_nm}
+                      onChange={(e) => setFilter((prev) => ({ ...prev, mst_nm: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="mt-6 grid h-[calc(100vh-25rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
+              <Card className="overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+                  <CardTitle className="text-lg font-semibold">코드그룹 목록</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid w-full grid-cols-4 items-center gap-4">
-                        <div className="flex items-center space-x-2">
-                            <label htmlFor="codeGroup" className="w-20">코드 명</label>
-                            <Input id="codeGroup" placeholder="코드 그룹을 입력하세요" value={filter.codeGroup || ''} onChange={(e) => setFilter({ ...filter, codeGroup: e.target.value })} />
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <label htmlFor="codeValue" className="w-20">코드 값</label>
-                            <Input id="codeValue" placeholder="코드 값을 입력하세요" value={filter.codeValue || ''} onChange={(e) => setFilter({ ...filter, codeValue: e.target.value })} />
-                        </div>
-                    </div>
+                <CardContent className="p-0">
+                  <GridTable columns={mst_columns} data={codes} isLoading={loading} onRowClick={handleMstRowClick} selectedRowId={selectedId}/>
                 </CardContent>
               </Card>
-                    
-              <div className="mt-6 grid h-[calc(100vh-25rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
-                <Card className="overflow-hidden">
-                  <CardHeader>
-                    <CardTitle>코드 목록</CardTitle>
-                    <CardDescription>0건</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                        <div className="max-h-[calc(100vh-30rem)] overflow-y-auto">
-                          <table className="min-w-full text-left text-sm">
-                            <thead className="bg-slate-50 text-slate-600">
-                                      {table.getHeaderGroups().map((headerGroup) => (
-                                        <tr key={headerGroup.id}>
-                                          {headerGroup.headers.map((header) => (
-                                            <th key={header.id} className="px-3 py-2 font-semibold">
-                                              {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                                            </th>
-                                          ))}
-                                        </tr>
-                                      ))}
-                            </thead>
-                            <tbody>
-                                      {table.getRowModel().rows.map((row) => {
-                                        const user = row.original
-                                        return (
-                                          <tr
-                                            key={row.id}
-                                            onClick={() => setSelected(user)}
-                                            className={`cursor-pointer border-t border-slate-100 hover:bg-slate-50 ${
-                                              selected?.id === user.id ? 'bg-slate-100 font-semibold' : ''
-                                            }`}
-                                          >
-                                            {row.getVisibleCells().map((cell) => (
-                                              <td key={cell.id} className="px-3 py-2 align-middle">
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                              </td>
-                                            ))}
-                                          </tr>
-                                        )
-                                      })}
-                          </tbody>
-                        </table>
-                      </div>
-                  </CardContent>
-                </Card>
-        
-                <Card>
-                  <CardHeader>
-                    <CardTitle>코드 정보</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    
-                    <div className="mt-6 flex justify-end gap-2">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => console.log("저장")}>
-                        저장
-                      </Button>
-                      <Button size="sm" className="bg-red-600 hover:bg-blue-700 text-white" onClick={() => console.log("삭제")}>
-                        삭제
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </main>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+                  <CardTitle className="text-lg font-semibold">코드목록</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <GridTable columns={dtl_columns} data={codeDtls} isLoading={loading} onRowClick={handleDtlRowClick} selectedRowId={selectedId}/>        
+                </CardContent>
+              </Card>
+            </div>
+      </main>  
     )
 }

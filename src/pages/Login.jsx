@@ -16,7 +16,6 @@ export default function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
-    console.log(id, password);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
