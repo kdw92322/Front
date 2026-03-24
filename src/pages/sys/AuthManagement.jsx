@@ -1,10 +1,153 @@
-import React from 'react'
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from "@/components/ui/label";
+import GridTable from '@/components/layout/GridTable';
+import { Text } from '@/components/gridcol/Text';
+import { Check } from '@/components/gridcol/Check';
+import { API_BASE_URL } from '@/lib/config';
+import axios from '../../lib/axios';
 
 export function AuthManagement() {
+    const [authList, setAuthList] = useState([]);
+    const [filter, setFilter] = useState({ role_id: '', role_nm: '' });
+    const [selectedRowId, setSelectedRowId] = useState(null);
+
+    useEffect(() => {
+        search();
+    }, []);
+
+    const search = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/auth/select`, { params: filter });
+            setAuthList(response.data || []);
+        } catch (error) {
+            console.error('조회 오류:', error);
+        }
+    };
+
+    const save = async () => {
+        const inserts = authList.filter(row => row.status === 'I');
+        const updates = authList.filter(row => row.status === 'U');
+        
+        if (inserts.length === 0 && updates.length === 0) {
+            alert('저장할 변경사항이 없습니다.');
+            return;
+        }
+
+        try {
+            await axios.post(`${API_BASE_URL}/auth/save`, { inserts, updates });
+            alert('저장되었습니다.');
+            search();
+        } catch (error) {
+            console.error('저장 오류:', error);
+            alert('저장 실패');
+        }
+    };
+
+    const deleteRow = async () => {
+        if (!selectedRowId) {
+            alert('삭제할 행을 선택해주세요.');
+            return;
+        }
+
+        const row = authList.find(r => r.role_id === selectedRowId);
+        
+        // 신규 행(아직 DB에 없음)인 경우 목록에서만 제거
+        if (row && row.status === 'I') {
+            setAuthList(prev => prev.filter(r => r.role_id !== selectedRowId));
+            setSelectedRowId(null);
+            return;
+        }
+
+        if (!window.confirm('선택한 권한을 삭제하시겠습니까?')) return;
+
+        try {
+            await axios.post(`${API_BASE_URL}/auth/delete`, { role_id: selectedRowId });
+            alert('삭제되었습니다.');
+            search();
+            setSelectedRowId(null);
+        } catch (error) {
+            console.error('삭제 오류:', error);
+            alert('삭제 실패');
+        }
+    };
+
+    const addRow = () => {
+        const newRow = {
+            role_id: '',
+            role_nm: '',
+            use_yn: 'Y',
+            remark: '',
+            status: 'I'
+        };
+        setAuthList(prev => [...prev, newRow]);
+    };
+
+    const columns = useMemo(() => [
+        { accessorKey: 'role_id', header: 'Role', size: 1, cell: (props) => Text(props) },
+        { accessorKey: 'role_nm', header: 'Role Name', size: 2, cell: (props) => Text(props) },
+        { accessorKey: 'remark', header: '설명', size: 3, cell: (props) => Text(props) },
+        { accessorKey: 'use_yn', header: '사용여부', size: 1, cell: (props) => Check(props) },
+    ], []);
 
     return (
-        <div>
-            <h1>권한 관리</h1>
-        </div>
+        <main className="h-full flex flex-col p-3 overflow-hidden">
+            <div className="flex items-center justify-between mb-4 shrink-0">
+                <CardTitle>권한관리</CardTitle>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={search}>조회</Button>
+                    <Button variant="outline" size="sm" onClick={save}>저장</Button>
+                    <Button variant="outline" size="sm" onClick={deleteRow}>삭제</Button>
+                </div>
+            </div>
+
+            <Card className="mb-4 shrink-0">
+                <CardHeader className="p-4">
+                    <CardTitle className="text-lg font-semibold">조회조건</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <Label className="mb-1 block">Role</Label>
+                            <Input 
+                                value={filter.role_id} 
+                                onChange={(e) => setFilter(prev => ({ ...prev, role_id: e.target.value }))} 
+                            />
+                        </div>
+                        <div>
+                            <Label className="mb-1 block">Role Name</Label>
+                            <Input 
+                                value={filter.role_nm} 
+                                onChange={(e) => setFilter(prev => ({ ...prev, role_nm: e.target.value }))} 
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="flex flex-col flex-1 min-h-0">
+                <CardHeader className="flex flex-row justify-between items-center p-4 border-b bg-slate-50">
+                    <CardTitle className="text-base">권한 목록</CardTitle>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={addRow}>행추가</Button>
+                        <Button variant="outline" size="sm" onClick={deleteRow}>행삭제</Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0 flex-1 overflow-hidden">
+                    <div className="h-full overflow-y-auto">
+                        <GridTable
+                            columns={columns}
+                            data={authList}
+                            setData={setAuthList}
+                            onRowClick={(row) => setSelectedRowId(row.role_id)}
+                            selectedRowId={selectedRowId}
+                            rowKey="role_id"
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+        </main>
     )
 }

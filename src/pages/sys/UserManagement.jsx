@@ -1,23 +1,25 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { flexRender } from '@tanstack/react-table';
-import { useReactTable, getCoreRowModel } from '@tanstack/react-table';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { API_BASE_URL } from '@/lib/config';
+import { getCodeDetails } from '../../lib/code';
 import GridTable from '@/components/layout/GridTable';
 import axios from '../../lib/axios';
 
-const initialUsers = [
-  // { id: 1, name: '홍길동', email: 'hong@example.com', role: 'Admin', status: 'Active', phone: '010-1234-5678' },
-  // { id: 2, name: '김영희', email: 'kim@example.com', role: 'User', status: 'Inactive', phone: '010-9876-5432' },
-  // { id: 3, name: '박철수', email: 'park@example.com', role: 'Manager', status: 'Active', phone: '010-2222-3333' },
-  // { id: 4, name: '이민수', email: 'lee@example.com', role: 'User', status: 'Active', phone: '010-4444-5555' },
-  // { id: 5, name: '최수진', email: 'choi@example.com', role: 'Admin', status: 'Inactive', phone: '010-6666-7777' },
-]
-
 export function UserManagement() {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([
+    // { id: 1, name: '홍길동', email: 'hong@example.com', role: 'Admin', status: 'Active', phone: '010-1234-5678' },
+    // { id: 2, name: '김영희', email: 'kim@example.com', role: 'User', status: 'Inactive', phone: '010-9876-5432' },
+    // { id: 3, name: '박철수', email: 'park@example.com', role: 'Manager', status: 'Active', phone: '010-2222-3333' },
+    // { id: 4, name: '이민수', email: 'lee@example.com', role: 'User', status: 'Active', phone: '010-4444-5555' },
+    // { id: 5, name: '최수진', email: 'choi@example.com', role: 'Admin', status: 'Inactive', phone: '010-6666-7777' },
+  ]);
+
+  const [combeRoles, setComboRoles] = useState([]);
+  const [combeStatus, setComboStatus] = useState([]);
+
   const [filter, setFilter] = useState({ query: '', role: 'All', status: 'All' });
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,8 +27,20 @@ export function UserManagement() {
   const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
-    setEditing(selected)
-  }, [selected])
+    //코드 정보 불러오기
+    const fetchCodeData = async () => {
+      try {
+        const roleData = await getCodeDetails('role');
+        setComboRoles(roleData);
+
+        const statData = await getCodeDetails('stat');
+        setComboStatus(statData);
+      } catch (e) {
+        console.error('Failed to fetch code groups:', e);
+      }
+    };
+    fetchCodeData();
+  }, [])
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -85,24 +99,40 @@ export function UserManagement() {
     console.log("클릭된 데이터:", rowData);
     setSelectedId(rowData.id); // 선택된 ID 저장 (하이라이트용)
     setEditing({ ...rowData });
-    
   };
+
+  const onDelete = () => {  
+    
+  }
 
   return (
     <main className="h-full overflow-y-auto p-3 scrollbar-hidden">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <CardTitle>사용자 관리</CardTitle>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => searchCondInit()}>
+            초기화
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onNewForm()}>
+            신규
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => search()}>
+            조회
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onSave()}>
+            저장
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onDelete()}>
+            삭제
+          </Button>
+        </div>
+      </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle>조회조건</CardTitle>
-          </div>
-          {/* 오른쪽 영역 (버튼 등 추가) */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => searchCondInit()}>
-              초기화
-            </Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => search()}>
-              조회
-            </Button>
+            <CardTitle className="text-lg font-semibold">조회조건</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -122,10 +152,10 @@ export function UserManagement() {
                 onChange={(e) => setFilter((prev) => ({ ...prev, role: e.target.value }))}
                 className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all cursor-pointer"
               >
-                <option>All</option>
-                <option>Admin</option>
-                <option>Manager</option>
-                <option>User</option>
+                <option value="All">All</option>
+                {combeRoles.map((role) => (
+                  <option key={role.dtl_cd} value={role.dtl_cd}>{role.dtl_nm}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -135,9 +165,10 @@ export function UserManagement() {
                 onChange={(e) => setFilter((prev) => ({ ...prev, status: e.target.value }))}
                 className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all cursor-pointer"
               >
-                <option>All</option>
-                <option>Active</option>
-                <option>Inactive</option>
+                <option value="All">All</option>
+                {combeStatus.map((status) => (
+                  <option key={status.dtl_cd} value={status.dtl_cd}>{status.dtl_nm}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -147,7 +178,7 @@ export function UserManagement() {
       <div className="mt-6 grid h-[calc(100vh-25rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>사용자 목록</CardTitle>
+            <CardTitle className="text-lg font-semibold">사용자 목록</CardTitle>
             <CardDescription>{filteredUsers.length}건</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -157,7 +188,7 @@ export function UserManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>사용자 정보</CardTitle>
+            <CardTitle className="text-lg font-semibold">사용자 정보</CardTitle>
             {/* <CardDescription>그리드에서 행을 클릭하면 이곳에 상세 정보가 표시됩니다.</CardDescription> */}
           </CardHeader>
           <CardContent>
@@ -211,9 +242,9 @@ export function UserManagement() {
                         className="block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                       >
-                        <option value="Admin">Admin</option>
-                        <option value="Manager">Manager</option>
-                        <option value="User">User</option>
+                        {combeRoles.map((role) => (
+                          <option key={role.dtl_cd} value={role.dtl_cd}>{role.dtl_nm}</option>
+                        ))}
                       </select>
                     </div>
 
@@ -226,8 +257,9 @@ export function UserManagement() {
                         className="block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                       >
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
+                        {combeStatus.map((status) => (
+                          <option key={status.dtl_cd} value={status.dtl_cd}>{status.dtl_nm}</option>
+                        ))}
                       </select>
                     </div>
 
@@ -242,15 +274,6 @@ export function UserManagement() {
                       />
                     </div>
 
-                    {/* 하단 버튼 영역 */}
-                    <div className="mt-2 flex justify-end gap-2 lg:col-span-2">
-                      <button className="bg-red-600 rounded-md px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors">
-                        삭제
-                      </button>
-                      <button className="bg-green-600 rounded-md px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:ring-4 focus:ring-green-200 transition-all">
-                        저장
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>

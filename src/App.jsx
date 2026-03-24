@@ -19,7 +19,6 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute.jsx'
 
 export default function App() {
   const token = localStorage.getItem('authToken');
-
   return (
     <Router>
       <Routes>

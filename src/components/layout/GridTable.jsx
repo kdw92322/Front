@@ -5,11 +5,34 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 
-const GridTable = ({ columns, data, onRowClick, selectedRowId }) => {
+const GridTable = ({ columns, data=[], onRowClick, selectedRowId, setData, rowKey = 'id' }) => {
+  // 1. 데이터와 컬럼을 메모이제이션 (성능 및 렌더링 보장)
+  const memoizedData = useMemo(() => data, [data]);
+  const memoizedColumns = useMemo(() => columns, [columns]);
+  
   const table = useReactTable({
     data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+    meta: {
+      updateData: (rowIndex, columnId, value) => {
+        if (setData) {
+          setData((old) =>
+            old.map((row, index) => {
+              if (index === rowIndex) {
+                const updatedRow = { ...old[rowIndex], [columnId]: value };
+                // If the row is not new (status != 'I'), mark it as updated ('U')
+                if (old[rowIndex].status !== 'I') {
+                  updatedRow.status = 'U';
+                }
+                return updatedRow;
+              }
+              return row;
+            })
+          );
+        }
+      },
+    },
   });
 
   // 컬럼 정의에서 size(숫자)가 있으면 fr로, 없으면 기본 1fr로 설정
@@ -44,12 +67,12 @@ const GridTable = ({ columns, data, onRowClick, selectedRowId }) => {
       <div className="max-h-[500px] overflow-y-auto divide-y divide-slate-100">
         {table.getRowModel().rows.map((row) => {
           // 현재 행이 선택되었는지 확인 (보통 id나 특정 키값 비교)
-          const isSelected = selectedRowId === row.original.id;
+          const isSelected = selectedRowId === row.original[rowKey];
           return (
             <div
               key={row.id}
               onClick={() => {
-                    if(onRowClick) onRowClick(row.original);
+                    if(onRowClick) onRowClick(row.original, row.index);
                 }
               }
               style={{ display: 'grid', gridTemplateColumns: gridTemplate }}

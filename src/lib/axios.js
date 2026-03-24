@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { removeToken } from '@/lib/auth'
+import { removeToken } from './auth';
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:8081',
@@ -31,9 +31,11 @@ apiClient.interceptors.response.use(
     console.log(error.response);
     // 만약 토큰이 만료되었거나 인증 실패(401)가 뜨면
     if (error.response && error.response.status === 401) {
-      //alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+      /*
       removeToken();
-      //window.location.href = '/login'; // 로그인 페이지로 강제 이동
+      alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+      window.location.href = '/login'; // 로그인 페이지로 강제 이동
+      */
     }
     return Promise.reject(error);
   }

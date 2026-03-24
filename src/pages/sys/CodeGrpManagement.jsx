@@ -15,11 +15,9 @@ export function CodeGrpManagement() {
     const [filter, setFilter] = useState({});
     const [codes, setCodes] = useState([]);
     const [selected, setSelected] = useState(null);
-    const [selectedValue, setSelectedValue] = useState("Y");
-    const [editing, setEditing] = useState(selected);
     const [selectedId, setSelectedId] = useState(null);
 
-    const [formData, setFormData] = useState({
+    const initForm = {
         mst_cd: "",
         mst_nm: "",
         use_yn: "Y",
@@ -27,27 +25,26 @@ export function CodeGrpManagement() {
         attr1: "",
         attr2: "",
         attr3: "",
-    });
+    }
 
+    const [formData, setFormData] = useState(initForm);
 
-    useEffect(() => {
-        setEditing(selected)
-    }, [selected])
-    
-    // 값이 바뀔 때 실행될 함수
-    const handleValueChange = (value) => {
-        setSelectedValue(value)
-    }    
+    const onNewForm = () => {
+      setSelected(null);
+      setSelectedId(null);
+      setCodes([]);
+      setFormData(initForm);
+    }
 
     const onInputChange = (key, value) => {
-      setEditing((prev) => ({ ...prev, [key]: value }))
+      setFormData((prev) => ({ ...prev, [key]: value }))
     }  
 
     const searchCondInit = () => {
       setFilter({ mst_nm: '', mst_cd: '' })
     } 
 
-    const search = async () => {
+    const onSearch = async () => {
       try {
           const response = await axios.get(`${API_BASE_URL}/code/select`, { params: filter })
           //console.log(response.data);
@@ -59,9 +56,38 @@ export function CodeGrpManagement() {
       }
     }
 
+    const onSave = async () => {
+      try {
+          if (selectedId) {
+            await axios.put(`${API_BASE_URL}/codeGrp/update`, formData);
+          } else {
+            await axios.post(`${API_BASE_URL}/codeGrp/insert`, formData);
+          }
+          alert('저장되었습니다.');
+          onSearch();
+          if(formData.mst_cd) searchDtlParam(formData.mst_cd);
+      } catch (error) {
+        console.error('저장 중 오류:', error);
+        alert('저장에 실패했습니다.');
+      }   
+    }
+
+    const onDelete = async () => {
+      try {
+        if (window.confirm('선택한 행을 삭제하시겠습니까? 이 작업은 즉시 서버에 반영됩니다.')) {
+          await axios.delete(`${API_BASE_URL}/codeGrp/delete`, { data: { mst_cd: selectedId } });
+          alert('삭제되었습니다.');
+          onSearch();
+        }
+      } catch (error) {
+        console.error('삭제 중 오류:', error);
+        alert('삭제에 실패했습니다.');
+      }
+    }
+
     const columns = [
       { accessorKey: 'mst_cd', header: '코드그룹', size: 1 },   
-      { accessorKey: 'mst_nm', header: '코드그룹명', size: 1 }, 
+      { accessorKey: 'mst_nm', header: '코드그룹명', size: 2 }, 
 
     ];
     
@@ -87,16 +113,19 @@ export function CodeGrpManagement() {
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => searchCondInit()}>
-                        초기화
+                      초기화
                     </Button>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => search()}>
-                        조회
+                    <Button variant="outline" size="sm" onClick={() => onNewForm()}>
+                      신규
                     </Button>
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => search()}>
-                        저장
+                    <Button variant="outline" size="sm" onClick={() => onSearch()}>
+                      조회
                     </Button>
-                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => search()}>
-                        삭제
+                    <Button variant="outline" size="sm" onClick={() => onSave()}>
+                      저장
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => onDelete()}>
+                      삭제
                     </Button>
                 </div>
             </div>
@@ -131,7 +160,7 @@ export function CodeGrpManagement() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
                   <CardTitle className="text-lg font-semibold">코드그룹 목록</CardTitle>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent>
                   <GridTable columns={columns} data={codes} onRowClick={handleRowClick} selectedRowId={selectedId}/>
                 </CardContent>
               </Card>
@@ -151,7 +180,7 @@ export function CodeGrpManagement() {
                         />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹 명</label>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹명</label>
                         <Input
                             type="text"
                             className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
@@ -164,7 +193,7 @@ export function CodeGrpManagement() {
                         <label className="mb-1 block text-sm font-medium text-slate-700">사용 여부</label>
                             <RadioGroup 
                                 value={formData.use_yn} 
-                                onValueChange={handleValueChange}
+                                onValueChange={(value) => onInputChange('use_yn', value)}
                                 className="flex flex-col gap-3"
                             >
                                 <div className="flex items-center space-x-2">
