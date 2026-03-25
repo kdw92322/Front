@@ -64,8 +64,7 @@ export function CodeGrpManagement() {
             await axios.post(`${API_BASE_URL}/codeGrp/insert`, formData);
           }
           alert('저장되었습니다.');
-          onSearch();
-          if(formData.mst_cd) searchDtlParam(formData.mst_cd);
+          callAfterSaveProcess();
       } catch (error) {
         console.error('저장 중 오류:', error);
         alert('저장에 실패했습니다.');
@@ -77,7 +76,7 @@ export function CodeGrpManagement() {
         if (window.confirm('선택한 행을 삭제하시겠습니까? 이 작업은 즉시 서버에 반영됩니다.')) {
           await axios.delete(`${API_BASE_URL}/codeGrp/delete`, { data: { mst_cd: selectedId } });
           alert('삭제되었습니다.');
-          onSearch();
+          callAfterSaveProcess();
         }
       } catch (error) {
         console.error('삭제 중 오류:', error);
@@ -104,6 +103,16 @@ export function CodeGrpManagement() {
         attr3: rowData.attr3,
       });
     } 
+
+    const callAfterSaveProcess = () => {
+      onSearch();
+      setFormData(initForm);
+      setSelected(null);
+      setSelectedId(null);
+      setCodes([]);
+
+      return;
+    }
 
     return (
         <main className="h-full overflow-y-auto p-3 scrollbar-hidden">

@@ -116,6 +116,8 @@ export function MenuManagement() {
 
             alert('저장되었습니다.');
             loadMenus(); // 트리 재조회
+            onNewForm(); // 폼 초기화
+
         } catch (error) {
             console.error('폼 저장 오류:', error);
             alert('저장에 실패했습니다.');
@@ -127,7 +129,7 @@ export function MenuManagement() {
         if (!window.confirm(`[${formData.name}] 메뉴를 삭제하시겠습니까? 하위 메뉴도 함께 삭제될 수 있습니다.`)) return;
 
         try {
-            await axios.delete(`${API_BASE_URL}/menu/delete`, { code: formData.code });
+            await axios.post(`${API_BASE_URL}/menu/delete`, { code: formData.code });
             alert('삭제되었습니다.');
             loadMenus();
             setSelectedNode(null);
