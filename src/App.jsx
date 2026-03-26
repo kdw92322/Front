@@ -18,19 +18,41 @@ const MainComponent = React.lazy(() => import('./pages/Main.jsx'));
 
 export default function App() {
   const token = localStorage.getItem('authToken');
+  const userRole = localStorage.getItem('userRole'); // 로그인 시 저장된 Role (예: ROLE_ADMIN)
   const [menuRoutes, setMenuRoutes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRoutes = async () => {
-      if (!token) {
+      if (!token || !userRole) {
         setIsLoading(false);
         return;
       }
       try {
-        const response = await axios.get(`${API_BASE_URL}/menu/select`);
-        const menus = response.data || [];
-        const validRoutes = menus
+        // 1. 서버에서 해당 권한(role_id)이 접근 가능한 메뉴만 조회하거나,
+        // 2. 전체를 가져온 후 프론트엔드에서 하드코딩된 규칙으로 필터링합니다.
+        const response = await axios.get(`${API_BASE_URL}/menu/select`, {
+          params: { role_id: userRole } 
+        });
+        
+        let menus = response.data || [];
+
+        // [프론트엔드 보안 필터링 예시]
+        // ROLE_ADMIN: 모든 메뉴 허용
+        // ROLE_USER: 시스템 관리(sys/) 메뉴 제외
+        // ROLE_GUEST: 메인 대시보드만 허용
+        const filteredMenus = menus.filter(menu => {
+          if (userRole === 'ROLE_ADMIN') return true;
+          if (userRole === 'ROLE_USER') {
+            return !menu.viewPath?.includes('sys/');
+          }
+          if (userRole === 'ROLE_GUEST') {
+            return menu.path === '/main' || menu.path === '/image/MainA';
+          }
+          return false;
+        });
+
+        const validRoutes = filteredMenus
           .filter(menu => menu.useYn === 'Y' && menu.path)
           .map(menu => {
             // 2. API 데이터의 viewPath(파일경로)를 이용하여 동적 매핑

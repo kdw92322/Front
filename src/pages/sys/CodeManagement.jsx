@@ -21,10 +21,14 @@ export function CodeManagement() {
     const [selectedMstId, setSelectedMstId] = useState(null);
     const [selectedDtlId, setSelectedDtlId] = useState(null);
     const [selectedDtlIndex, setSelectedDtlIndex] = useState(null);
-    const [columnVisibility, setColumnVisibility] = useState({
-      mst_cd: false, // 초기값: 숨김 처리할 컬럼 ID
-    });
     
+    useEffect(() => {
+        const init = async () => {
+          search();
+        };
+        init();
+    }, []);
+
     useEffect(() => {
         if (dtlParams.mst_cd) {
           searchDtl(dtlParams);
@@ -182,16 +186,16 @@ export function CodeManagement() {
       <main className="h-full overflow-y-auto p-3 scrollbar-hidden">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                  <CardTitle>코드관리</CardTitle>
+                  <CardTitle className="text-lg">코드관리</CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => searchCondInit()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => searchCondInit()}>
                       초기화
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => search()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => search()}>
                       조회
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => save()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => save()}>
                       저장
                     </Button>
                 </div>
@@ -199,20 +203,20 @@ export function CodeManagement() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
                 <div>
-                  <CardTitle className="text-lg font-semibold">조회조건</CardTitle>
+                  <CardTitle className="text-sm font-semibold">조회조건</CardTitle>
                 </div>
               </CardHeader>  
               <CardContent>
                 <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-3">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">코드그룹</label>
                     <Input
                       value={filter.mst_cd}
                       onChange={(e) => setFilter((prev) => ({ ...prev, mst_cd: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹명</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">코드그룹명</label>
                     <Input
                       value={filter.mst_nm}
                       onChange={(e) => setFilter((prev) => ({ ...prev, mst_nm: e.target.value }))}
@@ -225,7 +229,7 @@ export function CodeManagement() {
             <div className="mt-6 grid h-[calc(100vh-25rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
               <Card className="overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
-                  <CardTitle className="text-lg font-semibold">코드그룹 목록</CardTitle>
+                  <CardTitle className="text-sm font-semibold">코드그룹 목록</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <GridTable 
@@ -241,13 +245,13 @@ export function CodeManagement() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
                   <div>
-                    <CardTitle className="text-lg font-semibold">코드목록</CardTitle>
+                    <CardTitle className="text-sm font-semibold">코드목록</CardTitle>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => addRow()}>
+                    <Button size="sm" className="h-8 px-6 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => addRow()}>
                       추가
                     </Button>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => delRow()}>
+                    <Button size="sm" className="h-8 px-6 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => delRow()}>
                       삭제
                     </Button>
                   </div>

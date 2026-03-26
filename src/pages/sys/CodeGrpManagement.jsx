@@ -10,12 +10,18 @@ import { API_BASE_URL } from '@/lib/config'
 import axios from '../../lib/axios';
 import GridTable from '@/components/layout/GridTable';
 
-
 export function CodeGrpManagement() {
     const [filter, setFilter] = useState({});
     const [codes, setCodes] = useState([]);
     const [selected, setSelected] = useState(null);
     const [selectedId, setSelectedId] = useState(null);
+
+    useEffect(() => {
+        const init = async () => {
+          onSearch();
+        };
+      init();
+    }, []);
 
     const initForm = {
         mst_cd: "",
@@ -118,22 +124,22 @@ export function CodeGrpManagement() {
         <main className="h-full overflow-y-auto p-3 scrollbar-hidden">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <CardTitle>코드그룹 관리</CardTitle>
+                    <CardTitle className="text-lg">코드그룹 관리</CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => searchCondInit()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => searchCondInit()}>
                       초기화
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => onNewForm()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => onNewForm()}>
                       신규
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => onSearch()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => onSearch()}>
                       조회
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => onSave()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => onSave()}>
                       저장
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => onDelete()}>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => onDelete()}>
                       삭제
                     </Button>
                 </div>
@@ -141,7 +147,7 @@ export function CodeGrpManagement() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
                 <div>
-                  <CardTitle className="text-lg font-semibold">조회조건</CardTitle>
+                  <CardTitle className="text-sm font-semibold">조회조건</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -167,7 +173,7 @@ export function CodeGrpManagement() {
             <div className="mt-6 grid h-[calc(100vh-28rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
               <Card className="overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
-                  <CardTitle className="text-lg font-semibold">코드그룹 목록</CardTitle>
+                  <CardTitle className="text-sm font-semibold">코드그룹 목록</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <GridTable columns={columns} data={codes} onRowClick={handleRowClick} selectedRowId={selectedId}/>
@@ -175,79 +181,79 @@ export function CodeGrpManagement() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
-                  <CardTitle className="text-lg font-semibold">코드그룹 정보</CardTitle>
+                  <CardTitle className="text-sm font-semibold">코드그룹 정보</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-x-6 gap-y-5 p-3">
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹</label>
+                        <label className="mb-1 block text-xs font-medium text-slate-700">코드그룹</label>
                         <Input
                             type="text"
-                            className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                            className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
                             onChange={(e) => onInputChange('mst_cd', e.target.value)}
                             placeholder="코드그룹을 입력하세요"
                             value={formData.mst_cd}
                         />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹명</label>
+                        <label className="mb-1 block text-xs font-medium text-slate-700">코드그룹명</label>
                         <Input
                             type="text"
-                            className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
+                            className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
                             onChange={(e) => onInputChange('mst_nm', e.target.value)}
                             placeholder="코드그룹 명을 입력하세요"
                             value={formData.mst_nm}
                         />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">사용 여부</label>
+                        <label className="mb-1 block text-xs font-medium text-slate-700">사용 여부</label>
                             <RadioGroup 
                                 value={formData.use_yn} 
                                 onValueChange={(value) => onInputChange('use_yn', value)}
                                 className="flex flex-col gap-3"
                             >
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="Y" id="r1" />
+                                <div className="flex items-center space-x-2 scale-90 origin-left">
+                                    <RadioGroupItem value="Y" id="r1" className="scale-90" />
                                     <Label htmlFor="r1">사용</Label>
                                 </div>
                                     
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="N" id="r2" />
+                                <div className="flex items-center space-x-2 scale-90 origin-left">
+                                    <RadioGroupItem value="N" id="r2" className="scale-90" />
                                     <Label htmlFor="r2">미사용</Label>
                                 </div>
                             </RadioGroup>
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">속성1</label>
+                        <label className="mb-1 block text-xs font-medium text-slate-700">속성1</label>
                         <Input
                                 type="text"
                                 value={formData.attr1}
-                                className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
+                                className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
                                 onChange={(e) => onInputChange('attr1', e.target.value)}
                                 placeholder="속성1를 입력하세요"
                             />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">속성2</label>
+                        <label className="mb-1 block text-xs font-medium text-slate-700">속성2</label>
                         <Input
                                 type="text"
                                 value={formData.attr2}
-                                className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
+                                className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
                                 onChange={(e) => onInputChange('attr2', e.target.value)}
                                 placeholder="속성2를 입력하세요"
                             />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">속성3</label>
+                        <label className="mb-1 block text-xs font-medium text-slate-700">속성3</label>
                         <Input
                                 type="text"
                                 value={formData.attr3}
-                                className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
+                                className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
                                 onChange={(e) => onInputChange('attr3', e.target.value)}
                                 placeholder="속성3를 입력하세요"
                             />
                     </div>
                     <div className="col-span-3">
-                        <label className="mb-1 block text-sm font-medium text-slate-700">비고</label>
+                        <label className="mb-1 block text-xs font-medium text-slate-700">비고</label>
                         <Textarea 
                             placeholder="비고를 입력하세요"
                             className="resize-none" // 우측 하단 크기 조절 핸들 제거

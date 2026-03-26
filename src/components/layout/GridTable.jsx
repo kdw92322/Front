@@ -53,7 +53,7 @@ const GridTable = ({ columns, data=[], onRowClick, selectedRowId, setData, rowKe
           {headerGroup.headers.map((header) => (
             <div 
               key={header.id} 
-              className="p-3 text-sm border-r last:border-0 border-slate-200 flex items-center justify-center"
+              className="py-2 px-3 text-xs border-r last:border-0 border-slate-200 flex items-center justify-center uppercase tracking-wider font-bold"
             >
               {header.isPlaceholder
                 ? null

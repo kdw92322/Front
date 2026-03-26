@@ -105,7 +105,7 @@ export function AuthManagement() {
                     <select
                         value={getValue() || ''}
                         onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.value)}
-                        className="w-full h-full bg-transparent outline-none cursor-pointer"
+                        className="w-full h-7 bg-transparent outline-none cursor-pointer text-xs"
                     >
                         <option value="">선택</option>
                         {comboRoles.map((role) => (
@@ -122,22 +122,22 @@ export function AuthManagement() {
     return (
         <main className="h-full flex flex-col p-3 overflow-hidden">
             <div className="flex items-center justify-between mb-4 shrink-0">
-                <CardTitle>권한관리</CardTitle>
+                <CardTitle className="text-lg">권한관리</CardTitle>
                 <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={search}>조회</Button>
-                    <Button variant="outline" size="sm" onClick={save}>저장</Button>
-                    <Button variant="outline" size="sm" onClick={deleteRow}>삭제</Button>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={search}>조회</Button>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={save}>저장</Button>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={deleteRow}>삭제</Button>
                 </div>
             </div>
 
-            <Card className="mb-4 shrink-0">
-                <CardHeader className="p-4">
-                    <CardTitle className="text-lg font-semibold">조회조건</CardTitle>
+            <Card className="mb-3 shrink-0">
+                <CardHeader className="py-2 px-4 border-b bg-slate-50/50">
+                    <CardTitle className="text-sm font-semibold">조회조건</CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <Label className="mb-1 block">Role</Label>
+                <CardContent className="p-3">
+                    <div className="grid grid-cols-4 gap-4">
+                        <div className="space-y-1">
+                            <Label>Role</Label>
                             <Input 
                                 value={filter.role_id} 
                                 onChange={(e) => setFilter(prev => ({ ...prev, role_id: e.target.value }))} 
@@ -148,11 +148,11 @@ export function AuthManagement() {
             </Card>
 
             <Card className="flex flex-col flex-1 min-h-0">
-                <CardHeader className="flex flex-row justify-between items-center p-4 border-b bg-slate-50">
-                    <CardTitle className="text-base">권한 목록</CardTitle>
+                <CardHeader className="flex flex-row justify-between items-center py-2 px-4 border-b bg-slate-50">
+                    <CardTitle className="text-sm font-semibold">권한 목록</CardTitle>
                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={addRow}>행추가</Button>
-                        <Button variant="outline" size="sm" onClick={deleteRow}>행삭제</Button>
+                        <Button variant="outline" size="sm" className="h-8 px-6" onClick={addRow}>행추가</Button>
+                        <Button variant="outline" size="sm" className="h-8 px-6" onClick={deleteRow}>행삭제</Button>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0 flex-1 overflow-hidden">

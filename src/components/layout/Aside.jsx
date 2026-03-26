@@ -17,12 +17,30 @@ export function Aside() {
 
   useEffect(() => {
     const fetchMenus = async () => {
+      const userRole = localStorage.getItem('userRole');
+      if (!userRole) return;
+
       try {
-        const response = await axios.get(`${API_BASE_URL}/menu/select`);
-        const data = response.data || [];
+        const response = await axios.get(`${API_BASE_URL}/menu/select`, {
+          params: { role_id: userRole }
+        });
+        
+        let data = response.data || [];
+
+        // 권한별 메뉴 필터링 로직 (App.jsx와 동일한 기준 적용)
+        const filteredData = data.filter(menu => {
+          if (userRole === 'ROLE_ADMIN') return true;
+          if (userRole === 'ROLE_USER') {
+            return !menu.viewPath?.includes('sys/');
+          }
+          if (userRole === 'ROLE_GUEST') {
+            return menu.path === '/main' || menu.path === '/image/MainA';
+          }
+          return false;
+        });
         
         // Flat Data를 Aside 메뉴 구조(Title -> Items)로 변환
-        const tree = buildMenuTree(data);
+        const tree = buildMenuTree(filteredData);
         setMenuGroups(tree);
 
         // 초기 로딩 시 첫 번째 그룹 열기
@@ -69,13 +87,13 @@ export function Aside() {
       </div> 
       */}
 
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-2">
         {menuGroups.map((group, groupIdx) => (
-          <div key={group.code || groupIdx} className="mb-4">
+          <div key={group.code || groupIdx} className="mb-2">
             {/* 상위 메뉴 (클릭 시 토글) */}
             <button
               onClick={() => toggleGroup(group.code)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-300 hover:bg-slate-700 rounded-md transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 rounded-md transition-colors"
             >
               <span>{group.title}</span>
               <span className={`text-[10px] transition-transform duration-200 ${openGroups[group.code] ? 'rotate-180' : 'rotate-0'}`}>
@@ -94,7 +112,7 @@ export function Aside() {
                   <NavLink
                     to={item.path}
                     className={({ isActive }) =>
-                      `flex items-center pl-10 pr-4 py-2.5 rounded-md text-sm transition-all ${
+                      `flex items-center pl-8 pr-4 py-1.5 rounded-md text-xs transition-all ${
                         isActive
                           ? 'bg-blue-600 text-white font-medium'
                           : 'text-slate-400 hover:bg-slate-700 hover:text-white'

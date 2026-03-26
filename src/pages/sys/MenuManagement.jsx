@@ -18,6 +18,7 @@ export function MenuManagement() {
     const [selectedNode, setSelectedNode] = useState(null); // 트리에서 선택된 노드
     const [childNodes, setChildNodes] = useState([]); // 그리드용 하위 노드 리스트
     const [expanded, setExpanded] = useState({}); // 트리 확장 상태
+    const [selectedChildCode, setSelectedChildCode] = useState(null); // 하위 그리드 선택 코드
 
     // 폼 데이터 (우측 상단)
     const initForm = {
@@ -25,6 +26,8 @@ export function MenuManagement() {
         parentcode: "ROOT",
         name: "",
         path: "",
+        viewPath: "",
+        module: "",
         order: 0,
         useYn: "",
         remark: ""
@@ -51,6 +54,7 @@ export function MenuManagement() {
         } else {
             setFormData(initForm);
             setChildNodes([]);
+            setSelectedChildCode(null);
         }
     }, [selectedNode, menus]);
 
@@ -63,6 +67,13 @@ export function MenuManagement() {
             const data = response.data || [];
             setMenus(data);
             setTreeData(buildTree(data, 'ROOT'));
+
+            // 조회 완료 시 모든 노드를 펼침 상태로 설정
+            const initialExpanded = {};
+            data.forEach(item => {
+                if (item.code) initialExpanded[item.code] = true;
+            });
+            setExpanded(initialExpanded);
         } catch (error) {
             console.error('메뉴 조회 오류:', error);
         }
@@ -87,6 +98,7 @@ export function MenuManagement() {
 
     const handleNodeClick = (node) => {
         setSelectedNode(node);
+        setSelectedChildCode(null);
     };
 
     // --- Functions: Right Top (Form) ---
@@ -146,7 +158,7 @@ export function MenuManagement() {
             return;
         }
         const newRow = {
-            code: '',
+            code: null, // 선택을 위한 임시 유니크 키
             parentcode: selectedNode.code,
             name: '',
             path: '',
@@ -171,24 +183,58 @@ export function MenuManagement() {
             // 일괄 저장 API 호출
             await axios.post(`${API_BASE_URL}/menu/save`, { inserts, updates, deletes });
             alert('하위 메뉴가 저장되었습니다.');
-            loadMenus(); // 전체 데이터 갱신
+            //loadMenus(); // 전체 데이터 갱신
+            window.location.reload();
         } catch (error) {
             console.error('그리드 저장 오류:', error);
             alert('저장 실패');
         }
     };
 
-    const deleteGridRow = () => {
-         // 체크박스나 선택된 행 삭제 로직. 여기서는 마지막 행 제거 또는 선택 로직 구현 필요.
-         // 편의상 마지막 행 제거 예시, 실제로는 GridTable의 selectedRowId 등을 활용해야 함.
-         alert('그리드 삭제는 행 선택 기능을 구현하여 처리합니다.');
+    const deleteGridRow = async () => {
+        if (!selectedChildCode) {
+            alert('삭제할 행을 선택해주세요.');
+            return;
+        }
+
+        const rowToDelete = childNodes.find(row => row.code === selectedChildCode);
+        if (!rowToDelete) return;
+
+        // 신규 추가된 행인 경우 (아직 DB에 저장되지 않음)
+        if (rowToDelete.status === 'I') {
+            if (window.confirm('선택한 행을 목록에서 제거하시겠습니까?')) {
+                setChildNodes(prev => prev.filter(row => row.code !== selectedChildCode));
+                setSelectedChildCode(null);
+            }
+            return;
+        }
+
+        // 기존 행인 경우 서버에 즉시 삭제 요청
+        if (window.confirm(`[${rowToDelete.name}] 메뉴를 삭제하시겠습니까? 이 작업은 즉시 서버에 반영됩니다.`)) {
+            try {
+                await axios.post(`${API_BASE_URL}/menu/delete`, { code: rowToDelete.code });
+                alert('삭제되었습니다.');
+                loadMenus(); // 전체 데이터 갱신
+                setSelectedChildCode(null);
+            } catch (error) {
+                console.error('그리드 삭제 오류:', error);
+                alert('삭제 실패');
+            }
+        }
     };
 
     // --- Columns Definition ---
     const gridColumns = useMemo(() => [
-        { accessorKey: 'code', header: '메뉴코드', size: 1, cell: (props) => Text(props) },
+        { 
+            accessorKey: 'code', 
+            header: '메뉴코드', 
+            size: 1, 
+            cell: ({ getValue }) => <span className="text-slate-400 font-medium">{getValue() || '자동 생성'}</span>
+        },
         { accessorKey: 'name', header: '메뉴명', size: 2, cell: (props) => Text(props) },
         { accessorKey: 'path', header: '경로(URL)', size: 2, cell: (props) => Text(props) },
+        { accessorKey: 'viewPath', header: '화면경로', size: 2, cell: (props) => Text(props) },
+        { accessorKey: 'module', header: '모듈명', size: 1, cell: (props) => Text(props) },
         { accessorKey: 'order', header: '정렬', size: 1, cell: (props) => Text(props) },
         { accessorKey: 'useYn', header: '사용', size: 1, cell: (props) => Check(props) },
     ], []);
@@ -234,9 +280,9 @@ export function MenuManagement() {
     return (
         <main className="h-full overflow-hidden p-3 flex flex-col">
              <div className="flex items-center justify-between mb-4 shrink-0">
-                <CardTitle>메뉴 관리</CardTitle>
+                <CardTitle className="text-lg">메뉴 관리</CardTitle>
                 <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={loadMenus}>새로고침</Button>
+                    <Button variant="outline" size="sm" className="h-8 px-6" onClick={loadMenus}>새로고침</Button>
                 </div>
             </div>
 
@@ -244,7 +290,7 @@ export function MenuManagement() {
                 {/* --- Left: Menu Tree --- */}
                 <Card className="w-1/3 flex flex-col h-full">
                     <CardHeader className="py-3 px-4 border-b bg-slate-50">
-                        <CardTitle className="text-base">메뉴 구조</CardTitle>
+                        <CardTitle className="text-sm font-semibold">메뉴 구조</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-y-auto p-2 scrollbar-thin">
                         <div className="-ml-2">
@@ -261,11 +307,11 @@ export function MenuManagement() {
                     {/* Right Top: Node Info Form */}
                     <Card>
                         <CardHeader className="py-3 px-4 border-b flex flex-row justify-between items-center">
-                            <CardTitle className="text-base">메뉴 상세 정보</CardTitle>
+                            <CardTitle className="text-sm font-semibold">메뉴 상세 정보</CardTitle>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={onNewForm}>신규(초기화)</Button>
-                                <Button variant="default" size="sm" onClick={onFormSave}>저장</Button>
-                                <Button variant="destructive" size="sm" onClick={onFormDelete}>삭제</Button>
+                                <Button variant="outline" size="sm" className="h-8 px-6" onClick={onNewForm}>신규(초기화)</Button>
+                                <Button variant="default" size="sm" className="h-8 px-6" onClick={onFormSave}>저장</Button>
+                                <Button variant="destructive" size="sm" className="h-8 px-6" onClick={onFormDelete}>삭제</Button>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4">
@@ -279,7 +325,9 @@ export function MenuManagement() {
                                     <Input 
                                         value={formData.code} 
                                         onChange={(e) => onInputChange('code', e.target.value)}
-                                        placeholder="자동생성 또는 입력"
+                                        placeholder="자동 생성"
+                                        disabled
+                                        className="bg-slate-50"
                                     />
                                 </div>
                                 <div>
@@ -294,6 +342,22 @@ export function MenuManagement() {
                                     <Input 
                                         value={formData.path} 
                                         onChange={(e) => onInputChange('path', e.target.value)} 
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="mb-1">화면 경로 (viewPath)</Label>
+                                    <Input 
+                                        value={formData.viewPath} 
+                                        onChange={(e) => onInputChange('viewPath', e.target.value)} 
+                                        placeholder="예: sys/UserManagement.jsx"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="mb-1">모듈명 (module)</Label>
+                                    <Input 
+                                        value={formData.module} 
+                                        onChange={(e) => onInputChange('module', e.target.value)} 
+                                        placeholder="컴포넌트 Export명"
                                     />
                                 </div>
                                 <div>
@@ -329,11 +393,11 @@ export function MenuManagement() {
                     {(formData.parentcode === 'ROOT' || !formData.parentcode) && (
                     <Card className="flex flex-col flex-1 max-h-80">
                         <CardHeader className="py-3 px-4 border-b flex flex-row justify-between items-center bg-slate-50">
-                            <CardTitle className="text-base">하위 메뉴 목록</CardTitle>
+                            <CardTitle className="text-sm font-semibold">하위 메뉴 목록</CardTitle>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={addGridRow}>행추가</Button>
-                                {/* <Button variant="outline" size="xs" onClick={deleteGridRow}>행삭제</Button> */}
-                                <Button variant="default" size="sm" onClick={saveGrid}>목록 저장</Button>
+                                <Button variant="outline" size="sm" className="h-8 px-6" onClick={addGridRow}>행추가</Button>
+                                <Button variant="outline" size="sm" className="h-8 px-6" onClick={deleteGridRow}>행삭제</Button>
+                                <Button variant="default" size="sm" className="h-8 px-6" onClick={saveGrid}>목록 저장</Button>
                             </div>
                         </CardHeader>
                         <CardContent className="p-0 flex-1 overflow-hidden">
@@ -342,6 +406,8 @@ export function MenuManagement() {
                                     columns={gridColumns} 
                                     data={childNodes} 
                                     setData={setChildNodes}
+                                    onRowClick={(row) => setSelectedChildCode(row.code)}
+                                    selectedRowId={selectedChildCode}
                                     rowKey="code"
                                 />
                             </div>

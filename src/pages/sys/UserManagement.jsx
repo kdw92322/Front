@@ -31,9 +31,12 @@ export function UserManagement() {
 
         const statData = await getCodeDetails('stat');
         setComboStatus(statData);
+
       } catch (e) {
         console.error('Failed to fetch code groups:', e);
       }
+
+      search();
     };
     fetchCodeData();
   }, [])
@@ -176,22 +179,22 @@ export function UserManagement() {
     <main className="h-full overflow-y-auto p-3 scrollbar-hidden">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <CardTitle>사용자 관리</CardTitle>
+          <CardTitle className="text-lg">사용자 관리</CardTitle>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => searchCondInit()}>
+          <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => searchCondInit()}>
             초기화
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onNewForm()}>
+          <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => onNewForm()}>
             신규
           </Button>
-          <Button variant="outline" size="sm" onClick={() => search()}>
+          <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => search()}>
             조회
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onSave()}>
+          <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => onSave()}>
             저장
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onDelete()}>
+          <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => onDelete()}>
             삭제
           </Button>
         </div>
@@ -199,13 +202,13 @@ export function UserManagement() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle className="text-lg font-semibold">조회조건</CardTitle>
+            <CardTitle className="text-sm font-semibold">조회조건</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">검색</label>
+              <label className="mb-1 block text-xs font-medium text-slate-700">검색</label>
               <Input
                 value={filter.query}
                 placeholder="이름 또는 이메일"
@@ -213,7 +216,7 @@ export function UserManagement() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">권한</label>
+              <label className="mb-1 block text-xs font-medium text-slate-700">권한</label>
               <select
                 value={filter.role}
                 onChange={(e) => setFilter((prev) => ({ ...prev, role: e.target.value }))}
@@ -226,7 +229,7 @@ export function UserManagement() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">상태</label>
+              <label className="mb-1 block text-xs font-medium text-slate-700">상태</label>
               <select
                 value={filter.status}
                 onChange={(e) => setFilter((prev) => ({ ...prev, status: e.target.value }))}
@@ -245,7 +248,7 @@ export function UserManagement() {
       <div className="mt-6 grid h-[calc(100vh-28rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
         <Card className="overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
-            <CardTitle className="text-lg font-semibold">사용자 목록</CardTitle>
+            <CardTitle className="text-sm font-semibold">사용자 목록</CardTitle>
             <CardDescription>{filteredUsers.length}건</CardDescription>
           </CardHeader>
           <CardContent>
@@ -255,14 +258,14 @@ export function UserManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">사용자 정보</CardTitle>
+            <CardTitle className="text-sm font-semibold">사용자 정보</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-x-6 gap-y-5 p-3">
                     {/* 아이디 */}
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-500">아이디</label>
                       <Input
-                        className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                        className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
                         value={editing.id || ''}
                         onChange={(e) => onInputChange('id', e.target.value)}
                         placeholder="아이디를 입력하세요"
@@ -277,7 +280,7 @@ export function UserManagement() {
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all pr-10"
+                          className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all pr-10"
                           value={editing.password || ''}
                           onChange={(e) => onInputChange('password', e.target.value)}
                           placeholder={selectedId ? "변경시에만 입력하세요" : "비밀번호를 입력하세요"}
@@ -299,7 +302,7 @@ export function UserManagement() {
                       <div className="relative">
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
-                          className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all pr-10"
+                          className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all pr-10"
                           value={editing.passwordConfirm || ''}
                           onChange={(e) => onInputChange('passwordConfirm', e.target.value)}
                           placeholder="비밀번호를 다시 입력하세요"
@@ -319,7 +322,7 @@ export function UserManagement() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-500">이름</label>
                       <Input
-                        className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                        className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
                         value={editing.name || ''}
                         onChange={(e) => onInputChange('name', e.target.value)}
                         placeholder="이름을 입력하세요"
@@ -331,7 +334,7 @@ export function UserManagement() {
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-500">이메일</label>
                       <Input
                         type="email"
-                        className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                        className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
                         value={editing.email || ''}
                         onChange={(e) => onInputChange('email', e.target.value)}
                         placeholder="example@mail.com"
@@ -344,7 +347,7 @@ export function UserManagement() {
                       <select
                         value={editing.role || ''}
                         onChange={(e) => onInputChange('role', e.target.value)}
-                        className="block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
+                        className="block h-8 w-full rounded-md border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                       >
                         {combeRoles.map((role) => (
@@ -359,7 +362,7 @@ export function UserManagement() {
                       <select
                         value={editing.status || ''}
                         onChange={(e) => onInputChange('status', e.target.value)}
-                        className="block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
+                        className="block h-8 w-full rounded-md border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 cursor-pointer appearance-none"
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                       >
                         {combeStatus.map((status) => (
@@ -372,7 +375,7 @@ export function UserManagement() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-500">전화번호</label>
                       <Input
-                        className="h-10 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
+                        className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
                         value={editing.phone || ''}
                         onChange={(e) => onInputChange('phone', e.target.value)}
                         placeholder="010-0000-0000"
