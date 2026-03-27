@@ -135,10 +135,9 @@ export function MenuAuthManagement() {
             c_yn: auths.c_yn ? 'Y' : 'N',
             d_yn: auths.d_yn ? 'Y' : 'N'
         }));
-        console.log(selectedRoleId, payload);
 
         try {
-            await axios.post(`${API_BASE_URL}/menuAuth/save`, { role_id: selectedRoleId, auths: payload });
+            await axios.post(`${API_BASE_URL}/menuAuth/update`, { role_id: selectedRoleId, auths: payload });
             alert('권한 설정이 저장되었습니다.');
         } catch (error) {
             console.error('저장 오류:', error);

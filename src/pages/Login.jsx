@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { setToken, setUserId } from '@/lib/auth'
+import { setToken, setUserId, setUserRole, parseJwt } from '@/lib/auth'
 import { API_BASE_URL } from '@/lib/config'
 
 export default function Login() {
@@ -31,6 +31,12 @@ export default function Login() {
         //2.상태 업데이트 (전역 상태용)
         setToken(data.token)
         setUserId(id)
+
+        // JWT 토큰에서 Role 정보 추출하여 저장
+        const payload = parseJwt(data.token)
+        if (payload && payload.role) {
+          setUserRole(payload.role)
+        }
         
         //3. 페이지 이동
         navigate('/main')

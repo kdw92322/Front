@@ -9,6 +9,11 @@ export const getToken = () => {
 export const removeToken = () => {
   localStorage.removeItem('authToken')
   localStorage.removeItem('userId')
+  localStorage.removeItem('userRole')
+}
+
+export const setUserRole = (role) => {
+  localStorage.setItem('userRole', role)
 }
 
 export const setUserId = (userId) => {
@@ -17,6 +22,18 @@ export const setUserId = (userId) => {
 
 export const getUserId = () => {
   return localStorage.getItem('userId')
+}
+
+export const getUserRole = () => {
+  const token = getToken();
+  if (!token) return null;
+
+  const base64Payload = token.split('.')[1]; // Payload 부분 추출
+  const payload = JSON.parse(atob(base64Payload)); // Base64 디코딩 후 JSON 파싱
+
+  const roles = payload.roles;
+  const user_role = roles[0];
+  return user_role;
 }
 
 export const parseJwt = (token) => {

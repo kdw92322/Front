@@ -9,9 +9,12 @@ import GridTable from '@/components/layout/GridTable';
 import { Text } from '@/components/gridcol/Text';
 import { Check } from '@/components/gridcol/Check';
 import { API_BASE_URL } from '@/lib/config';
+import { getToken, getUserRole } from '@/lib/auth'
 import axios from '../../lib/axios';
 
 export function MenuManagement() {
+    const token = getToken();
+
     // --- State ---
     const [menus, setMenus] = useState([]); // 전체 메뉴 리스트 (Flat Data)
     const [treeData, setTreeData] = useState([]); // 트리 구조 데이터

@@ -9,6 +9,7 @@ import Layout from '@/components/layout/Layout.jsx'
 import ProtectedRoute from '@/components/layout/ProtectedRoute.jsx'
 import { API_BASE_URL } from '@/lib/config'
 import axios from './lib/axios'
+import { getToken, getUserRole } from '@/lib/auth'
 
 // 1. Vite의 import.meta.glob을 사용하여 src/pages 하위의 모든 jsx 파일을 가져옴
 const pages = import.meta.glob('./pages/**/*.jsx');
@@ -17,17 +18,19 @@ const pages = import.meta.glob('./pages/**/*.jsx');
 const MainComponent = React.lazy(() => import('./pages/Main.jsx'));
 
 export default function App() {
-  const token = localStorage.getItem('authToken');
-  const userRole = localStorage.getItem('userRole'); // 로그인 시 저장된 Role (예: ROLE_ADMIN)
+  const token = getToken();
+      
   const [menuRoutes, setMenuRoutes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRoutes = async () => {
+      const userRole = getUserRole();
       if (!token || !userRole) {
         setIsLoading(false);
         return;
       }
+     
       try {
         // 1. 서버에서 해당 권한(role_id)이 접근 가능한 메뉴만 조회하거나,
         // 2. 전체를 가져온 후 프론트엔드에서 하드코딩된 규칙으로 필터링합니다.
@@ -47,7 +50,7 @@ export default function App() {
             return !menu.viewPath?.includes('sys/');
           }
           if (userRole === 'ROLE_GUEST') {
-            return menu.path === '/main' || menu.path === '/image/MainA';
+            return menu.path === '/main';
           }
           return false;
         });

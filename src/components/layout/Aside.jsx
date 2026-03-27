@@ -3,11 +3,11 @@ import { NavLink } from 'react-router-dom';
 import { FaUsers, FaKey, FaThList, FaChevronDown, FaChevronRight } from 'react-icons/fa'
 import axios from '@/lib/axios';
 import { API_BASE_URL } from '@/lib/config';
+import { getToken, getUserRole } from '@/lib/auth';
 
 export function Aside() {
   const [menuGroups, setMenuGroups] = useState([]);
   const [openGroups, setOpenGroups] = useState({});
-
   const toggleGroup = (groupKey) => {
     setOpenGroups((prev) => ({
       ...prev,
@@ -17,8 +17,9 @@ export function Aside() {
 
   useEffect(() => {
     const fetchMenus = async () => {
-      const userRole = localStorage.getItem('userRole');
-      if (!userRole) return;
+      const token = getToken();
+      const userRole = getUserRole(token);
+      if (!token) return;
 
       try {
         const response = await axios.get(`${API_BASE_URL}/menu/select`, {
@@ -26,27 +27,10 @@ export function Aside() {
         });
         
         let data = response.data || [];
-
-        // 권한별 메뉴 필터링 로직 (App.jsx와 동일한 기준 적용)
-        const filteredData = data.filter(menu => {
-          if (userRole === 'ROLE_ADMIN') return true;
-          if (userRole === 'ROLE_USER') {
-            return !menu.viewPath?.includes('sys/');
-          }
-          if (userRole === 'ROLE_GUEST') {
-            return menu.path === '/main' || menu.path === '/image/MainA';
-          }
-          return false;
-        });
-        
-        // Flat Data를 Aside 메뉴 구조(Title -> Items)로 변환
-        const tree = buildMenuTree(filteredData);
+        // 전체 데이터를 buildMenuTree에 전달하고, 권한에 따른 필터링은 내부에서 처리
+        const tree = buildMenuTree(data, userRole);
         setMenuGroups(tree);
 
-        // 초기 로딩 시 첫 번째 그룹 열기
-        if (tree.length > 0) {
-          setOpenGroups({ [tree[0].code]: true });
-        }
       } catch (error) {
         console.error("메뉴 목록 로드 실패", error);
       }
@@ -55,14 +39,15 @@ export function Aside() {
     fetchMenus();
   }, []);
 
-  const buildMenuTree = (flatMenus) => {
+  const buildMenuTree = (flatMenus, userRole) => {
     // 1. Root 메뉴 (상위 메뉴) 필터링 및 정렬
     const roots = flatMenus
       .filter(m => m.parentcode === 'ROOT' || !m.parentcode)
       .sort((a, b) => (a.order || 0) - (b.order || 0));
 
     // 2. 각 Root 메뉴의 하위 메뉴 매핑
-    return roots.map(root => {
+    return roots
+      .map(root => {
       const children = flatMenus
         .filter(m => m.parentcode === root.code)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -76,7 +61,9 @@ export function Aside() {
           code: child.code
         }))
       };
-    });
+      })
+      // 하위 메뉴가 하나라도 있는 상위 메뉴만 반환 (Empty Parent 방지)
+      .filter(group => group.items.length > 0);
   };
 
   return (
