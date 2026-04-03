@@ -12,6 +12,15 @@ import { API_BASE_URL } from '@/lib/config';
 import { getToken, getUserRole } from '@/lib/auth'
 import axios from '../../lib/axios';
 
+// 프로젝트 내의 모든 페이지 컴포넌트 파일 목록을 가져옴 (Vite 기능)
+const pageModules = import.meta.glob('/src/pages/**/*.jsx');
+const availablePaths = Object.keys(pageModules).map(key => key.replace('/src/pages/', './pages/'));
+
+const checkFileExists = (normalizedPath) => {
+    if (!normalizedPath) return true;
+    return availablePaths.includes(normalizedPath);
+};
+
 export function MenuManagement() {
     const token = getToken();
 
@@ -117,16 +126,45 @@ export function MenuManagement() {
     };
 
     const onFormSave = async () => {
+        // 유효성 검사
+        if (!formData.name?.trim()) {
+            alert('메뉴명을 입력해주세요.');
+            return;
+        }
+        if (!formData.path?.trim() || !formData.path.startsWith('/')) {
+            alert('URL 경로는 "/"로 시작하는 유효한 형식이어야 합니다. (예: /user-mng)');
+            return;
+        }
+        if (formData.viewPath && !formData.module?.trim()) {
+            alert('화면 경로(viewPath)가 입력된 경우, 컴포넌트 호출을 위한 모듈명(module)은 필수입니다.');
+            return;
+        }
+
         try {
-            // 신규(code가 menus에 없는 경우) 혹은 수정 판단
-            const isNew = !menus.find(m => m.code === formData.code);
-            console.log("isNew", isNew);
+            // 모듈명에 'module.' 접두사가 없으면 자동으로 추가
+            const dataToSave = {
+                ...formData,
+                module: (formData.module && !formData.module.startsWith('module.'))
+                    ? `module.${formData.module}`
+                    : formData.module,
+                // viewPath를 ./sys/Name 형식으로 정규화 (pages/ 제거)
+                viewPath: formData.viewPath 
+                    ? (formData.viewPath.startsWith('./') ? formData.viewPath : `./${formData.viewPath.replace(/^\//, '')}`).replace('./pages/', './')
+                    : ''
+            };
+
+            // 체크 시에는 다시 ./pages/를 붙여서 확인
+            const checkPath = dataToSave.viewPath.replace('./', './pages/');
+            if (dataToSave.viewPath && !checkFileExists(checkPath)) {
+                alert(`입력하신 화면 경로에 해당하는 파일이 존재하지 않습니다: ${formData.viewPath}\n(src/pages 하위 경로와 .jsx 확장자를 확인해주세요)`);
+                return;
+            }
+
+            const isNew = !menus.find(m => m.code === dataToSave.code);
             if(isNew){
-                //url = '/menu/insert';
-                await axios.post(`${API_BASE_URL}` + `/menu/insert`, formData);
+                await axios.post(`${API_BASE_URL}/menu/insert`, dataToSave);
             }else {
-                //url = '/menu/update';
-                await axios.put(`${API_BASE_URL}` + `/menu/update`, formData);
+                await axios.put(`${API_BASE_URL}/menu/update`, dataToSave);
             }
 
             alert('저장되었습니다.');
@@ -175,16 +213,52 @@ export function MenuManagement() {
     const saveGrid = async () => {
         const inserts = childNodes.filter(row => row.status === 'I');
         const updates = childNodes.filter(row => row.status === 'U');
-        const deletes = childNodes.filter(row => row.status === 'D'); // 그리드에서 삭제 처리 로직 필요 시
+        const deletes = childNodes.filter(row => row.status === 'D');
 
-        if (inserts.length === 0 && updates.length === 0 && deletes.length === 0) {
+        // 유효성 검사 (추가되거나 수정된 행 대상)
+        const itemsToValidate = [...inserts, ...updates];
+        for (const row of itemsToValidate) {
+            if (!row.name?.trim()) {
+                alert('하위 메뉴의 모든 명칭을 입력해주세요.');
+                return;
+            }
+            if (!row.path?.trim() || !row.path.startsWith('/')) {
+                alert(`[${row.name || '신규'}] 메뉴의 경로는 "/"로 시작해야 합니다.`);
+                return;
+            }
+            
+            const normalizedViewPath = row.viewPath ? (row.viewPath.startsWith('./pages/') ? row.viewPath : `./pages/${row.viewPath.replace(/^\//, '')}`) : null;
+            if (normalizedViewPath && !checkFileExists(normalizedViewPath)) {
+                alert(`[${row.name}] 화면 경로 파일이 존재하지 않습니다: ${row.viewPath}`);
+                return;
+            }
+        }
+
+        const processRow = (row) => ({
+            ...row,
+            module: (row.module && !row.module.startsWith('module.'))
+                ? `module.${row.module}`
+                : row.module,
+            viewPath: (row.viewPath && !row.viewPath.startsWith('./pages/'))
+                ? `./pages/${row.viewPath.replace(/^\//, '')}`
+                : row.viewPath
+        });
+
+        const processedInserts = inserts.map(processRow);
+        const processedUpdates = updates.map(processRow);
+
+        if (processedInserts.length === 0 && processedUpdates.length === 0 && deletes.length === 0) {
             alert('변경사항이 없습니다.');
             return;
         }
 
         try {
             // 일괄 저장 API 호출
-            await axios.post(`${API_BASE_URL}/menu/save`, { inserts, updates, deletes });
+            await axios.post(`${API_BASE_URL}/menu/save`, { 
+                inserts: processedInserts, 
+                updates: processedUpdates, 
+                deletes 
+            });
             alert('하위 메뉴가 저장되었습니다.');
             //loadMenus(); // 전체 데이터 갱신
             window.location.reload();

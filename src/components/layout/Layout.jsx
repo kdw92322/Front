@@ -32,9 +32,18 @@ export function Layout() {
     
     const isExist = tabs.find(tab => tab.path === location.pathname);
     if (!isExist) {
-      const menu = allMenus.find(m => m.path === location.pathname);
+      const formatUrl = (p) => {
+        if (!p || p === '#') return '';
+        if (p.startsWith('./')) return p.replace('./', '/');
+        return p.startsWith('/') ? p : `/${p}`;
+      };
+
+      const menu = allMenus.find(m => {
+        return formatUrl(m.path) === location.pathname;
+      });
+      
       if (menu) {
-        setTabs(prev => [...prev, { path: menu.path, name: menu.name }]);
+        setTabs(prev => [...prev, { path: formatUrl(menu.path), name: menu.name }]);
       } else if (location.pathname === '/main') {
         setTabs(prev => [...prev, { path: '/main', name: '메인' }]);
       }

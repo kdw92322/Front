@@ -97,7 +97,7 @@ export function Notice() {
         <main className="h-full flex flex-col p-3 overflow-hidden">
             {/* 헤더 영역 */}
             <div className="flex items-center justify-between mb-4 shrink-0">
-                <CardTitle className="text-lg">공지사항 관리</CardTitle>
+                <CardTitle className="text-lg">공지사항</CardTitle>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => setFilter({ title: '' })}>초기화</Button>
                     <Button variant="outline" size="sm" className="h-8 px-6" onClick={onNewForm}>신규</Button>

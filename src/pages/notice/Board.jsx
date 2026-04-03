@@ -1,4 +1,3 @@
-import React from 'react'
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,17 +12,21 @@ import { getCodeDetails } from '../../lib/code';
 
 export function Board() {
     const [boards, setBoards] = useState([]);
+    const [combeTypes, setComboTypes] = useState([]);
     const [categories, setCategories] = useState([]);
     const [filter, setFilter] = useState({ title: '', category: '' });
     const [selectedId, setSelectedId] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    // 로그인한 사용자 정보 가져오기 (localStorage 기준)
+    const loginId = localStorage.getItem('userId');
 
     const initForm = {
         board_id: '',
         category: 'GENERAL',
         title: '',
         content: '',
-        author: '',
+        author: loginId,
         use_yn: 'Y',
         reg_date: ''
     };
@@ -32,8 +35,8 @@ export function Board() {
     useEffect(() => {
         const init = async () => {
             // 공통 코드에서 게시판 카테고리 정보 로드 (있을 경우)
-            const cats = await getCodeDetails('board_cat');
-            if (cats) setCategories(cats);
+            const types = await getCodeDetails('boardType');
+            if (types) setCategories(types);
             search();
         };
         init();
@@ -105,14 +108,10 @@ export function Board() {
     ], []);
 
     return (
-        <div>
-            <h1>게시판 관리</h1>
-        </div>
-    )
         <main className="h-full flex flex-col p-3 overflow-hidden">
             {/* 버튼 툴바 */}
             <div className="flex items-center justify-between mb-4 shrink-0">
-                <CardTitle className="text-lg">게시판 관리</CardTitle>
+                <CardTitle className="text-lg">게시판</CardTitle>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="h-8 px-6" onClick={() => { setFilter({ title: '', category: '' }); search(); }}>초기화</Button>
                     <Button variant="outline" size="sm" className="h-8 px-6" onClick={onNewForm}>신규</Button>
@@ -157,13 +156,15 @@ export function Board() {
                         <CardTitle className="text-sm font-semibold">게시글 목록</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0 flex-1 overflow-hidden">
-                        <GridTable 
-                            columns={columns} 
-                            data={boards} 
-                            onRowClick={handleRowClick}
-                            selectedRowId={selectedId}
-                            rowKey="board_id"
-                        />
+                        <div className="h-full overflow-y-auto">
+                            <GridTable 
+                                columns={columns} 
+                                data={boards} 
+                                onRowClick={handleRowClick}
+                                selectedRowId={selectedId}
+                                rowKey="board_id"
+                            />
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -172,7 +173,7 @@ export function Board() {
                     <CardHeader className="py-3 px-4 border-b bg-slate-50">
                         <CardTitle className="text-sm font-semibold">상세 내용</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4 flex-1 overflow-y-auto space-y-4">
+                    <CardContent className="p-4 flex-1 overflow-y-auto space-y-4 scrollbar-hidden">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="col-span-1">
                                 <Label className="text-xs">분류</Label>
@@ -187,7 +188,12 @@ export function Board() {
                             </div>
                             <div className="col-span-1">
                                 <Label className="text-xs">작성자</Label>
-                                <Input className="mt-1" value={editing.author} onChange={(e) => setEditing({...editing, author: e.target.value})} />
+                                <Input 
+                                    className="mt-1 bg-slate-50" 
+                                    value={editing.author} 
+                                    readOnly 
+                                    disabled 
+                                />
                             </div>
                             <div className="col-span-2">
                                 <Label className="text-xs">제목</Label>
@@ -196,7 +202,7 @@ export function Board() {
                             <div className="col-span-2">
                                 <Label className="text-xs">내용</Label>
                                 <Textarea 
-                                    className="h-80 mt-1 resize-none font-sans"
+                                    className="h-60 mt-1 resize-none font-sans"
                                     value={editing.content}
                                     onChange={(e) => setEditing({...editing, content: e.target.value})}
                                 />
@@ -217,7 +223,7 @@ export function Board() {
                 </Card>
             </div>
         </main>
-    );
+    )
 }
 
 export default Board;

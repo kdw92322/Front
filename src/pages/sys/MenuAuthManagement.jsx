@@ -53,7 +53,6 @@ export function MenuAuthManagement() {
         try {
             const response = await axios.get(`${API_BASE_URL}/menuAuth/select`, { params: { role_id: roleId } });
             const mapping = {};
-            console.log("data", response.data);
 
             response.data?.forEach(item => {
                 mapping[item.menu_code] = {
@@ -135,6 +134,7 @@ export function MenuAuthManagement() {
             c_yn: auths.c_yn ? 'Y' : 'N',
             d_yn: auths.d_yn ? 'Y' : 'N'
         }));
+        console.log(payload);
 
         try {
             await axios.post(`${API_BASE_URL}/menuAuth/update`, { role_id: selectedRoleId, auths: payload });

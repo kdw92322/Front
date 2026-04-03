@@ -39,7 +39,8 @@ export default function Login() {
         }
         
         //3. 페이지 이동
-        navigate('/main')
+        //navigate('/main')
+        window.location.href = '/main';
       } else {
         const errorData = await response.json()
         setError(errorData.message || 'Login failed')

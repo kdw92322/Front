@@ -52,12 +52,19 @@ export function Aside() {
         .filter(m => m.parentcode === root.code)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
+      const formatUrl = (p) => {
+        if (!p || p === '#') return '#';
+        if (p.startsWith('./')) return p.replace('./', '/');
+        if (p.startsWith('/')) return p;
+        return `/${p}`;
+      };
+
       return {
         code: root.code,
         title: root.name,
         items: children.map(child => ({
           name: child.name,
-          path: child.path || '#', // URL이 없으면 # 처리
+          path: formatUrl(child.path),
           code: child.code
         }))
       };

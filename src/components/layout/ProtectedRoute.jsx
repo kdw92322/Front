@@ -2,9 +2,10 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { getToken } from '@/lib/auth';
 
 export function ProtectedRoute() {
-  const token = localStorage.getItem('authToken'); // 또는 쿠키/상태 관리 도구
+  const token = getToken(); // auth 유틸리티를 사용하여 일관성 유지
   const location = useLocation();
   
   useEffect(() => {

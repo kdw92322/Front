@@ -18,15 +18,19 @@ const pages = import.meta.glob('./pages/**/*.jsx');
 const MainComponent = React.lazy(() => import('./pages/Main.jsx'));
 
 export default function App() {
-  const token = getToken();
-      
+  // 토큰 자체를 상태로 관리하거나, 단순 체크용 상태를 둡니다.
+  const [token, setToken] = useState(getToken());
   const [menuRoutes, setMenuRoutes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRoutes = async () => {
+      // 현재 저장소에서 최신 토큰과 롤을 가져옴
+      const currentToken = getToken();
+      setToken(currentToken);
+
       const userRole = getUserRole();
-      if (!token || !userRole) {
+      if (!currentToken || !userRole) {
         setIsLoading(false);
         return;
       }
@@ -39,7 +43,6 @@ export default function App() {
         });
         
         let menus = response.data || [];
-
         // [프론트엔드 보안 필터링 예시]
         // ROLE_ADMIN: 모든 메뉴 허용
         // ROLE_USER: 시스템 관리(sys/) 메뉴 제외
@@ -58,21 +61,29 @@ export default function App() {
         const validRoutes = filteredMenus
           .filter(menu => menu.useYn === 'Y' && menu.path)
           .map(menu => {
-            // 2. API 데이터의 viewPath(파일경로)를 이용하여 동적 매핑
-            // 예: viewPath = "./pages/sys/UserManagement.jsx", module = "UserManagement"
+            // 1. URL 경로 정규화 (./sys/user -> /sys/user)
+            const normalizedPath = menu.path.startsWith('./') 
+              ? menu.path.replace('./', '/') 
+              : (menu.path.startsWith('/') ? menu.path : `/${menu.path}`);
             
-            // DB 경로가 정확하지 않을 수 있으므로 여러 패턴으로 시도
-            // 1) 정확한 일치
-            // 2) "./" 누락 시 추가
-            // 3) "pages/" 경로 누락 시 추가 (예: sys/UserManagement.jsx)
+            // 2. viewPath 정규화 (./sys/UserManagement -> ./pages/sys/UserManagement.jsx)
+            let vPath = menu.viewPath || '';
+            if (vPath.startsWith('./')) {
+              // ./sys/... -> ./pages/sys/...
+              vPath = vPath.replace('./', './pages/');
+            } else {
+              vPath = `./pages/${vPath.replace(/^\//, '')}`;
+            }
+            if (!vPath.endsWith('.jsx')) vPath += '.jsx';
 
-            const importFn = pages[menu.viewPath] || 
-                             pages[`./${menu.viewPath}`] || 
-                             pages[`./pages/${menu.viewPath}`];
-            if (!importFn) return null;
+            const importFn = pages[vPath];
+            if (!importFn) {
+              console.warn(`[Route Warning] Component not found at: ${vPath}`);
+              return null;
+            }
 
             return {
-              path: menu.path,
+              path: normalizedPath,
               Component: React.lazy(async () => {
                 const module = await importFn();
                 // 3. module 값이 있으면 해당 Named Export를, 없으면 default를 반환
@@ -106,12 +117,19 @@ export default function App() {
         setMenuRoutes(validRoutes);
       } catch (error) {
         console.error("Failed to load menu routes:", error);
+        // 토큰이 유효하지 않거나 API 호출 실패 시 인증 상태 초기화
+        setToken(null);
       } finally {
         setIsLoading(false);
       }
     };
     fetchRoutes();
-  }, [token]);
+
+    // 로그인 성공 시 App을 리렌더링하기 위해 이벤트를 감시하거나, 
+    // 로그인 로직에서 window.location.reload()를 사용하는 것도 방법입니다.
+    // 여기서는 단순성을 위해 주기적으로 체크하거나 특정 이벤트를 수신할 수 있습니다.
+    window.addEventListener('storage', () => setToken(getToken()));
+  }, []);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen text-lg">Loading...</div>;
@@ -120,6 +138,10 @@ export default function App() {
   return (
     <Router>
       <Routes>
+        {/* 1. 최상위에서 루트 경로(/) 처리: 토큰 여부에 따라 즉시 리다이렉트 */}
+        <Route path="/" element={<Navigate to={token ? "/main" : "/login"} replace />} />
+
+        {/* 2. 보호된 경로 설정 */}
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             {/* 1. 메인 페이지는 API 데이터 유무와 상관없이 항상 접근 가능하도록 정적 라우트 등록 */}
@@ -133,7 +155,7 @@ export default function App() {
             />
 
             {/* API 기반 동적 라우팅 */}
-            {menuRoutes.map((route) => {
+            {menuRoutes.map((route) => {              
               // /main은 위에서 이미 정의했으므로 중복 방지
               if (route.path === '/main') return null;
               
@@ -152,8 +174,7 @@ export default function App() {
                 />
               );
             })}
-            <Route path="/" element={<Navigate to={token ? "/main" : "/login"} replace />} />
-            {/* 2. 정의되지 않은 경로로 접근 시 404 처리 (빈 화면 방지) */}
+            {/* 정의되지 않은 경로 처리 */}
             <Route path="*" element={<div className="flex items-center justify-center h-full text-xl text-gray-500">페이지를 찾을 수 없습니다. (404)</div>} />
           </Route>
         </Route>

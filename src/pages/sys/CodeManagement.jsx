@@ -226,7 +226,7 @@ export function CodeManagement() {
               </CardContent>
             </Card>
 
-            <div className="mt-6 grid h-[calc(100vh-25rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
+            <div className="mt-6 grid h-[calc(100vh-28rem)] grid-cols-1 gap-4 lg:grid-cols-[3fr_7fr]">
               <Card className="overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
                   <CardTitle className="text-sm font-semibold">코드그룹 목록</CardTitle>
