@@ -30,19 +30,19 @@ export function CodeManagement() {
     }, []);
 
     useEffect(() => {
-        if (dtlParams.mst_cd) {
+        if (dtlParams.mstCd) {
           searchDtl(dtlParams);
         }
     }, [dtlParams])
 
     const searchCondInit = () => {
-      setFilter({ mst_nm: '', mst_cd: '' })
+      setFilter({ mstNm: '', mstCd: '' })
     }
 
     const search = async () => {
       try {
           const response = await axios.get(`${API_BASE_URL}/code/select`, { params: filter })
-          //console.log(response.data);
+          console.log(response.data);
           setCodes(response.data);
           //return response.data;
       } catch (error) {
@@ -51,8 +51,8 @@ export function CodeManagement() {
       }
     }
     
-    const searchDtlParam = (mst_cd) => {
-      setDtlParams({ mst_cd : mst_cd });
+    const searchDtlParam = (mstCd) => {
+      setDtlParams({ mstCd : mstCd });
     }   
 
     const searchDtl = async (params) => {
@@ -79,7 +79,7 @@ export function CodeManagement() {
         const response = await axios.post(`${API_BASE_URL}/code/save`, { inserts:inserts, updates:updates });
         alert('저장되었습니다.');
         search();
-        if(dtlParams.mst_cd) searchDtl(dtlParams);           
+        if(dtlParams.mstCd) searchDtl(dtlParams);           
       } catch (error) {
         console.error('저장 중 오류:', error);
         alert('저장에 실패했습니다.');
@@ -87,18 +87,18 @@ export function CodeManagement() {
     }
 
     const mst_columns = [
-      { accessorKey: 'mst_cd', header: '코드그룹', size: 1 },    // 1의 비율
-      { accessorKey: 'mst_nm', header: '코드그룹명', size: 2 },  // 3의 비율 (3배 넓음)
+      { accessorKey: 'mstCd', header: '코드그룹', size: 1 },    // 1의 비율
+      { accessorKey: 'mstNm', header: '코드그룹명', size: 2 },  // 3의 비율 (3배 넓음)
     ];
 
     const dtl_columns = [
-      { accessorKey: 'dtl_cd', header: '코드',
+      { accessorKey: 'dtlCd', header: '코드',
         cell: ({ getValue,row,column, table }) => Text({ getValue, row, column, table })
       },    // 1의 비율
-      { accessorKey: 'dtl_nm', header: '코드명',
+      { accessorKey: 'dtlNm', header: '코드명',
         cell: ({ getValue,row,column, table }) => Text({ getValue, row, column, table }) 
       },  
-      { accessorKey: 'use_yn', header: '사용여부',
+      { accessorKey: 'useYn', header: '사용여부',
         cell: (props) => Check(props)
       },
       { accessorKey: 'remark', header: '비고',
@@ -116,16 +116,16 @@ export function CodeManagement() {
     ];
     
     const handleMstRowClick = (rowData) => {
-      const mst_cd = rowData.mst_cd;
+      const mstCd = rowData.mstCd;
       setSelectedMst(rowData);
       // 선택된 코드그룹의 상세 코드 조회
-      searchDtlParam(mst_cd);
-      setSelectedMstId(mst_cd);
+      searchDtlParam(mstCd);
+      setSelectedMstId(mstCd);
     }
 
     const handleDtlRowClick = (rowData, index) => {
-      const dtl_cd = rowData.dtl_cd;
-      setSelectedDtlId(dtl_cd);
+      const dtlCd = rowData.dtlCd;
+      setSelectedDtlId(dtlCd);
       setSelectedDtlIndex(index);
     }
 
@@ -135,10 +135,10 @@ export function CodeManagement() {
         return;
       }
       const newRow = {
-        mst_cd: selectedMst.mst_cd,
-        dtl_cd: '',
-        dtl_nm: '',     
-        use_yn: 'Y',
+        mstCd: selectedMst.mstCd,
+        dtlCd: '',
+        dtlNm: '',     
+        useYn: 'Y',
         remark: '',
         attr1: '',
         attr2: '',
@@ -211,15 +211,15 @@ export function CodeManagement() {
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-700">코드그룹</label>
                     <Input
-                      value={filter.mst_cd}
-                      onChange={(e) => setFilter((prev) => ({ ...prev, mst_cd: e.target.value }))}
+                      value={filter.mstCd}
+                      onChange={(e) => setFilter((prev) => ({ ...prev, mstCd: e.target.value }))}
                     />
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-700">코드그룹명</label>
                     <Input
-                      value={filter.mst_nm}
-                      onChange={(e) => setFilter((prev) => ({ ...prev, mst_nm: e.target.value }))}
+                      value={filter.mstNm}
+                      onChange={(e) => setFilter((prev) => ({ ...prev, mstNm: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -238,7 +238,7 @@ export function CodeManagement() {
                     isLoading={loading} 
                     onRowClick={handleMstRowClick} 
                     selectedRowId={selectedMstId}
-                    rowKey="mst_cd"
+                    rowKey="mstCd"
                   />
                 </CardContent>
               </Card>
@@ -263,7 +263,7 @@ export function CodeManagement() {
                     onRowClick={handleDtlRowClick} 
                     selectedRowId={selectedDtlId}
                     setData={setCodeDtls}
-                    rowKey="dtl_cd"
+                    rowKey="dtlCd"
                   />        
                 </CardContent>
               </Card>

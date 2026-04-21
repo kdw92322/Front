@@ -51,15 +51,15 @@ export function MenuAuthManagement() {
 
     const fetchAuthMapping = async (roleId) => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/menuAuth/select`, { params: { role_id: roleId } });
+            const response = await axios.get(`${API_BASE_URL}/menuAuth/select`, { params: { roleId: roleId } });
             const mapping = {};
 
             response.data?.forEach(item => {
-                mapping[item.menu_code] = {
-                    use_yn: item.use_yn === 'Y',
-                    r_yn: item.r_yn === 'Y',
-                    c_yn: item.c_yn === 'Y',
-                    d_yn: item.d_yn === 'Y'
+                mapping[item.menuCode] = {
+                    useYn: item.useYn === 'Y',
+                    rYn: item.rYn === 'Y',
+                    cYn: item.cYn === 'Y',
+                    dYn: item.dYn === 'Y'
                 };
             });
             setAuthMap(mapping);
@@ -95,24 +95,24 @@ export function MenuAuthManagement() {
                 });
             };
 
-            const currentAuth = nextMap[menuCode] || { use_yn: false, r_yn: false, c_yn: false, d_yn: false };
+            const currentAuth = nextMap[menuCode] || { useYn: false, rYn: false, cYn: false, dYn: false };
             let updatedAuth = { ...currentAuth, [key]: checked };
 
-            // '접근(use_yn)' 체크박스 클릭 시 나머지 CRUD 권한도 함께 토글
-            if (key === 'use_yn') {
+            // '접근(useYn)' 체크박스 클릭 시 나머지 CRUD 권한도 함께 토글
+            if (key === 'useYn') {
                 // 상위 메뉴 상태 변경 시 하위 메뉴들의 모든 권한도 재귀적으로 전파
                 updateRecursive(menuCode, checked);
 
                 updatedAuth = {
-                    use_yn: checked,
-                    r_yn: checked,
-                    c_yn: checked,
-                    d_yn: checked
+                    useYn: checked,
+                    rYn: checked,
+                    cYn: checked,
+                    dYn: checked
                 };
             } 
-            // CRUD 권한 중 하나라도 체크되면 '접근(use_yn)'도 자동으로 체크
-            else if (checked === true && ['r_yn', 'c_yn', 'd_yn'].includes(key)) {
-                updatedAuth.use_yn = true;
+            // CRUD 권한 중 하나라도 체크되면 '접근(useYn)'도 자동으로 체크
+            else if (checked === true && ['rYn', 'cYn', 'dYn'].includes(key)) {
+                updatedAuth.useYn = true;
             }
 
             nextMap[menuCode] = updatedAuth;
@@ -146,15 +146,15 @@ export function MenuAuthManagement() {
     };
 
     const roleColumns = [
-        { accessorKey: 'dtl_cd', header: 'ID', size: 1 },
-        { accessorKey: 'dtl_nm', header: '권한그룹명', size: 2 }
+        { accessorKey: 'dtlCd', header: 'ID', size: 1 },
+        { accessorKey: 'dtlNm', header: '권한그룹명', size: 2 }
     ];
 
     const renderTreeNodes = (nodes, level = 0) => {
         return nodes.map(node => {
             const isExpanded = expanded[node.code];
             const hasChildren = node.children && node.children.length > 0;
-            const auth = authMap[node.code] || { use_yn: false, r_yn: false, c_yn: false, d_yn: false };
+            const auth = authMap[node.code] || { useYn: false, rYn: false, cYn: false, dYn: false };
 
             return (
                 <React.Fragment key={node.code}>
@@ -175,10 +175,10 @@ export function MenuAuthManagement() {
 
                         {/* 권한 체크박스 영역 (접근, R, C, U, D) */}
                         <div className="flex shrink-0 items-center justify-around w-[300px] gap-2">
-                            <div className="w-12 flex justify-center"><Checkbox className="scale-90" checked={auth.use_yn} onCheckedChange={(val) => handleAuthChange(node.code, 'use_yn', val)} /></div>
-                            <div className="w-10 flex justify-center"><Checkbox className="scale-90" checked={auth.r_yn} onCheckedChange={(val) => handleAuthChange(node.code, 'r_yn', val)} /></div>
-                            <div className="w-10 flex justify-center"><Checkbox className="scale-90" checked={auth.c_yn} onCheckedChange={(val) => handleAuthChange(node.code, 'c_yn', val)} /></div>
-                            <div className="w-10 flex justify-center"><Checkbox className="scale-90" checked={auth.d_yn} onCheckedChange={(val) => handleAuthChange(node.code, 'd_yn', val)} /></div>
+                            <div className="w-12 flex justify-center"><Checkbox className="scale-90" checked={auth.useYn} onCheckedChange={(val) => handleAuthChange(node.code, 'useYn', val)} /></div>
+                            <div className="w-10 flex justify-center"><Checkbox className="scale-90" checked={auth.rYn} onCheckedChange={(val) => handleAuthChange(node.code, 'rYn', val)} /></div>
+                            <div className="w-10 flex justify-center"><Checkbox className="scale-90" checked={auth.cYn} onCheckedChange={(val) => handleAuthChange(node.code, 'cYn', val)} /></div>
+                            <div className="w-10 flex justify-center"><Checkbox className="scale-90" checked={auth.dYn} onCheckedChange={(val) => handleAuthChange(node.code, 'dYn', val)} /></div>
                         </div>
                     </div>
                     {hasChildren && isExpanded && renderTreeNodes(node.children, level + 1)}
@@ -207,9 +207,9 @@ export function MenuAuthManagement() {
                             <GridTable 
                                 columns={roleColumns} 
                                 data={roles} 
-                                onRowClick={(row) => setSelectedRoleId(row.dtl_cd)}
+                                onRowClick={(row) => setSelectedRoleId(row.dtlCd)}
                                 selectedRowId={selectedRoleId}
-                                rowKey="dtl_cd"
+                                rowKey="dtlCd"
                             />
                         </div>
                     </CardContent>

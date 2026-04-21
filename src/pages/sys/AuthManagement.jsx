@@ -13,7 +13,7 @@ import axios from '../../lib/axios';
 
 export function AuthManagement() {
     const [authList, setAuthList] = useState([]);
-    const [filter, setFilter] = useState({ role_id: '' });
+    const [filter, setFilter] = useState({ roleId: '' });
     const [selectedRowId, setSelectedRowId] = useState(null);
     const [comboRoles, setComboRoles] = useState([]);
 
@@ -22,7 +22,7 @@ export function AuthManagement() {
             // Role 코드 그룹 정보 가져오기
             const roles = await getCodeDetails('role');
             if (roles) {
-                setComboRoles(roles.map(r => ({ value: r.dtl_cd, label: r.dtl_nm })));
+                setComboRoles(roles.map(r => ({ value: r.dtlCd, label: r.dtlNm })));
             }
             search();
         };
@@ -32,6 +32,7 @@ export function AuthManagement() {
     const search = async () => {
         try {
             const response = await axios.get(`${API_BASE_URL}/authMng/select`, { params: filter });
+            console.log("API Response:", response.data);
             setAuthList(response.data || []);
         } catch (error) {
             console.error('조회 오류:', error);
@@ -63,11 +64,11 @@ export function AuthManagement() {
             return;
         }
 
-        const row = authList.find(r => r.role_id === selectedRowId);
+        const row = authList.find(r => r.roleId === selectedRowId);
         
         // 신규 행(아직 DB에 없음)인 경우 목록에서만 제거
         if (row && row.status === 'I') {
-            setAuthList(prev => prev.filter(r => r.role_id !== selectedRowId));
+            setAuthList(prev => prev.filter(r => r.roleId !== selectedRowId));
             setSelectedRowId(null);
             return;
         }
@@ -75,7 +76,7 @@ export function AuthManagement() {
         if (!window.confirm('선택한 권한을 삭제하시겠습니까?')) return;
 
         try {
-            await axios.post(`${API_BASE_URL}/authMng/delete`, { role_id: selectedRowId });
+            await axios.post(`${API_BASE_URL}/authMng/delete`, { roleId: selectedRowId });
             alert('삭제되었습니다.');
             search();
             setSelectedRowId(null);
@@ -87,7 +88,7 @@ export function AuthManagement() {
 
     const addRow = () => {
         const newRow = {
-            role_id: '',
+            roleId: '',
             use_yn: 'Y',
             remark: '',
             status: 'I'
@@ -97,7 +98,7 @@ export function AuthManagement() {
 
     const columns = useMemo(() => [
         { 
-            accessorKey: 'role_id', 
+            accessorKey: 'roleId', 
             header: 'Role', 
             size: 1, 
             cell: ({ getValue, row, column, table }) => {
@@ -139,8 +140,8 @@ export function AuthManagement() {
                         <div className="space-y-1">
                             <Label>Role</Label>
                             <Input 
-                                value={filter.role_id} 
-                                onChange={(e) => setFilter(prev => ({ ...prev, role_id: e.target.value }))} 
+                                value={filter.roleId} 
+                                onChange={(e) => setFilter(prev => ({ ...prev, roleId: e.target.value }))} 
                             />
                         </div>
                     </div>
@@ -161,9 +162,9 @@ export function AuthManagement() {
                             columns={columns}
                             data={authList}
                             setData={setAuthList}
-                            onRowClick={(row) => setSelectedRowId(row.role_id)}
+                            onRowClick={(row) => setSelectedRowId(row.roleId)}
                             selectedRowId={selectedRowId}
-                            rowKey="role_id"
+                            rowKey="roleId"
                         />
                     </div>
                 </CardContent>

@@ -224,7 +224,7 @@ export function UserManagement() {
               >
                 <option value="">전체</option>
                 {combeRoles.map((role) => (
-                  <option key={role.dtl_cd} value={role.dtl_cd}>{role.dtl_nm}</option>
+                  <option key={role.dtlCd} value={role.dtlCd}>{role.dtlNm}</option>
                 ))}
               </select>
             </div>
@@ -237,7 +237,7 @@ export function UserManagement() {
               >
                 <option value="">전체</option>
                 {combeStatus.map((status) => (
-                  <option key={status.dtl_cd} value={status.dtl_cd}>{status.dtl_nm}</option>
+                  <option key={status.dtlCd} value={status.dtlCd}>{status.dtlNm}</option>
                 ))}
               </select>
             </div>
@@ -351,7 +351,7 @@ export function UserManagement() {
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                       >
                         {combeRoles.map((role) => (
-                          <option key={role.dtl_cd} value={role.dtl_cd}>{role.dtl_nm}</option>
+                          <option key={role.dtlCd} value={role.dtlCd}>{role.dtlNm}</option>
                         ))}
                       </select>
                     </div>
@@ -366,7 +366,7 @@ export function UserManagement() {
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
                       >
                         {combeStatus.map((status) => (
-                          <option key={status.dtl_cd} value={status.dtl_cd}>{status.dtl_nm}</option>
+                          <option key={status.dtlCd} value={status.dtlCd}>{status.dtlNm}</option>
                         ))}
                       </select>
                     </div>

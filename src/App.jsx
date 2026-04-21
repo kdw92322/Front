@@ -39,7 +39,7 @@ export default function App() {
         // 1. 서버에서 해당 권한(role_id)이 접근 가능한 메뉴만 조회하거나,
         // 2. 전체를 가져온 후 프론트엔드에서 하드코딩된 규칙으로 필터링합니다.
         const response = await axios.get(`${API_BASE_URL}/menu/select`, {
-          params: { role_id: userRole } 
+          params: { roleId: userRole } 
         });
         
         let menus = response.data || [];
@@ -48,7 +48,7 @@ export default function App() {
         // ROLE_USER: 시스템 관리(sys/) 메뉴 제외
         // ROLE_GUEST: 메인 대시보드만 허용
         const filteredMenus = menus.filter(menu => {
-          if (userRole === 'ROLE_ADMIN') return true;
+          if (userRole === 'ROLE_ADMIN' || userRole === 'admin') return true;
           if (userRole === 'ROLE_USER') {
             return !menu.viewPath?.includes('sys/');
           }
@@ -113,23 +113,31 @@ export default function App() {
             };
           })
           .filter(Boolean); // 매핑되지 않은 항목 제거
-
+ 
         setMenuRoutes(validRoutes);
       } catch (error) {
         console.error("Failed to load menu routes:", error);
         // 토큰이 유효하지 않거나 API 호출 실패 시 인증 상태 초기화
         setToken(null);
       } finally {
-        setIsLoading(false);
+        // 약간의 지연을 주어 레이아웃 렌더링과 라우트 등록 타이밍을 맞춤
+        setTimeout(() => setIsLoading(false), 100);
       }
     };
-    fetchRoutes();
+
+    if (token) {
+        fetchRoutes();
+    } else {
+        setMenuRoutes([]);
+        setIsLoading(false);
+    }
 
     // 로그인 성공 시 App을 리렌더링하기 위해 이벤트를 감시하거나, 
     // 로그인 로직에서 window.location.reload()를 사용하는 것도 방법입니다.
     // 여기서는 단순성을 위해 주기적으로 체크하거나 특정 이벤트를 수신할 수 있습니다.
     window.addEventListener('storage', () => setToken(getToken()));
-  }, []);
+    return () => window.removeEventListener('storage', () => setToken(getToken()));
+  }, [token]); // token이 변경될 때마다 라우트를 다시 로드함
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen text-lg">Loading...</div>;

@@ -24,9 +24,9 @@ export function CodeGrpManagement() {
     }, []);
 
     const initForm = {
-        mst_cd: "",
-        mst_nm: "",
-        use_yn: "Y",
+        mstCd: "",
+        mstNm: "",
+        useYn: "Y",
         remark: "",
         attr1: "",
         attr2: "",
@@ -47,13 +47,13 @@ export function CodeGrpManagement() {
     }  
 
     const searchCondInit = () => {
-      setFilter({ mst_nm: '', mst_cd: '' })
+      setFilter({ mstNm: '', mstCd: '' })
     } 
 
     const onSearch = async () => {
       try {
           const response = await axios.get(`${API_BASE_URL}/code/select`, { params: filter })
-          //console.log(response.data);
+          console.log(response.data);
           setCodes(response.data);
           //return response.data;
       } catch (error) {
@@ -80,7 +80,7 @@ export function CodeGrpManagement() {
     const onDelete = async () => {
       try {
         if (window.confirm('선택한 행을 삭제하시겠습니까? 이 작업은 즉시 서버에 반영됩니다.')) {
-          await axios.delete(`${API_BASE_URL}/codeGrp/delete`, { data: { mst_cd: selectedId } });
+          await axios.delete(`${API_BASE_URL}/codeGrp/delete`, { data: { mstCd: selectedId } });
           alert('삭제되었습니다.');
           callAfterSaveProcess();
         }
@@ -91,18 +91,18 @@ export function CodeGrpManagement() {
     }
 
     const columns = [
-      { accessorKey: 'mst_cd', header: '코드그룹', size: 1 },   
-      { accessorKey: 'mst_nm', header: '코드그룹명', size: 2 }, 
+      { accessorKey: 'mstCd', header: '코드그룹', size: 1 },   
+      { accessorKey: 'mstNm', header: '코드그룹명', size: 2 }, 
 
     ];
     
     const handleRowClick = (rowData) => {
-      setSelected(rowData.mst_cd);
-      setSelectedId(rowData.mst_cd);
+      setSelected(rowData.mstCd);
+      setSelectedId(rowData.mstCd);
       setFormData({
-        mst_cd: rowData.mst_cd,
-        mst_nm: rowData.mst_nm,
-        use_yn: rowData.use_yn,
+        mstCd: rowData.mstCd,
+        mstNm: rowData.mstNm,
+        useYn: rowData.useYn,
         remark: rowData.remark,
         attr1: rowData.attr1,
         attr2: rowData.attr2,
@@ -155,15 +155,15 @@ export function CodeGrpManagement() {
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹</label>
                     <Input
-                      value={filter.mst_cd || ""}
-                      onChange={(e) => setFilter((prev) => ({ ...prev, mst_cd: e.target.value }))}
+                      value={filter.mstCd || ""}
+                      onChange={(e) => setFilter((prev) => ({ ...prev, mstCd: e.target.value }))}
                     />
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">코드그룹 명</label>
                     <Input
-                      value={filter.mst_nm || ""}
-                      onChange={(e) => setFilter((prev) => ({ ...prev, mst_nm: e.target.value }))}
+                      value={filter.mstNm || ""}
+                      onChange={(e) => setFilter((prev) => ({ ...prev, mstNm: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -189,9 +189,9 @@ export function CodeGrpManagement() {
                         <Input
                             type="text"
                             className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"
-                            onChange={(e) => onInputChange('mst_cd', e.target.value)}
+                            onChange={(e) => onInputChange('mstCd', e.target.value)}
                             placeholder="코드그룹을 입력하세요"
-                            value={formData.mst_cd}
+                            value={formData.mstCd}
                         />
                     </div>
                     <div>
@@ -199,16 +199,16 @@ export function CodeGrpManagement() {
                         <Input
                             type="text"
                             className="h-8 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all"      
-                            onChange={(e) => onInputChange('mst_nm', e.target.value)}
+                            onChange={(e) => onInputChange('mstNm', e.target.value)}
                             placeholder="코드그룹 명을 입력하세요"
-                            value={formData.mst_nm}
+                            value={formData.mstNm}
                         />
                     </div>
                     <div>
                         <label className="mb-1 block text-xs font-medium text-slate-700">사용 여부</label>
                             <RadioGroup 
-                                value={formData.use_yn} 
-                                onValueChange={(value) => onInputChange('use_yn', value)}
+                                value={formData.useYn} 
+                                onValueChange={(value) => onInputChange('useYn', value)}
                                 className="flex flex-col gap-3"
                             >
                                 <div className="flex items-center space-x-2 scale-90 origin-left">

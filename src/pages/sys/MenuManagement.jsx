@@ -15,10 +15,42 @@ import axios from '../../lib/axios';
 // 프로젝트 내의 모든 페이지 컴포넌트 파일 목록을 가져옴 (Vite 기능)
 const pageModules = import.meta.glob('/src/pages/**/*.jsx');
 const availablePaths = Object.keys(pageModules).map(key => key.replace('/src/pages/', './pages/'));
+// Autocomplete를 위한 경로 목록 (src/pages/ 하위 디렉토리의 .jsx 파일만 추출)
+const pathSuggestions = Object.keys(pageModules)
+    .map(key => key.replace('/src/pages/', './pages/'))
+    .filter(path => path.replace('./pages/', '').includes('/')); // 하위 디렉토리에 포함된 파일만 필터링
 
 const checkFileExists = (normalizedPath) => {
     if (!normalizedPath) return true;
     return availablePaths.includes(normalizedPath);
+};
+
+/**
+ * 파일 경로로부터 컴포넌트 이름을 추출하는 유틸리티
+ */
+const getModuleNameFromPath = async (vPath) => {
+    if (!vPath) return '';
+    // 경로 정규화 (Vite glob key 형식인 /src/pages/... 로 변환)
+    let key = vPath.startsWith('./pages/') 
+        ? vPath.replace('./pages/', '/src/pages/') 
+        : `/src/pages/${vPath.replace(/^\//, '').replace(/^pages\//, '')}`;
+    if (!key.endsWith('.jsx')) key += '.jsx';
+
+    const loader = pageModules[key];
+    if (!loader) return '';
+
+    try {
+        const mod = await loader();
+        // 1. Default Export 이름 확인 (익명 함수가 아닌 경우)
+        if (mod.default?.name && !['default', '_default', 'anonymous'].includes(mod.default.name)) {
+            return mod.default.name;
+        }
+        // 2. Named Export 중 대문자로 시작하는 첫 번째 함수 확인
+        const named = Object.keys(mod).find(k => k[0] === k[0].toUpperCase() && typeof mod[k] === 'function');
+        return named || '';
+    } catch (e) {
+        return '';
+    }
 };
 
 export function MenuManagement() {
@@ -42,6 +74,7 @@ export function MenuManagement() {
         module: "",
         order: 0,
         useYn: "",
+        popupYn: "N", // 새 창 열기 여부 추가
         remark: ""
     };
     const [formData, setFormData] = useState(initForm);
@@ -114,8 +147,14 @@ export function MenuManagement() {
     };
 
     // --- Functions: Right Top (Form) ---
-    const onInputChange = (key, value) => {
+    const onInputChange = async (key, value) => {
         setFormData(prev => ({ ...prev, [key]: value }));
+
+        // viewPath 입력 시 module명 자동 추출
+        if (key === 'viewPath' && value) {
+            const extractedName = await getModuleNameFromPath(value);
+            if (extractedName) setFormData(prev => ({ ...prev, module: extractedName }));
+        }
     };
 
     const onNewForm = () => {
@@ -227,21 +266,27 @@ export function MenuManagement() {
                 return;
             }
             
-            const normalizedViewPath = row.viewPath ? (row.viewPath.startsWith('./pages/') ? row.viewPath : `./pages/${row.viewPath.replace(/^\//, '')}`) : null;
-            if (normalizedViewPath && !checkFileExists(normalizedViewPath)) {
-                alert(`[${row.name}] 화면 경로 파일이 존재하지 않습니다: ${row.viewPath}`);
+            // 폼 저장과 동일한 방식으로 경로 정규화 및 존재 여부 체크
+            const normalizedViewPath = row.viewPath 
+                ? (row.viewPath.startsWith('./') ? row.viewPath : `./${row.viewPath.replace(/^\//, '')}`).replace('./pages/', './')
+                : '';
+            
+            const checkPath = normalizedViewPath.replace('./', './pages/');
+            if (normalizedViewPath && !checkFileExists(checkPath)) {
+                alert(`[${row.name}] 입력하신 화면 경로에 해당하는 파일이 존재하지 않습니다: ${row.viewPath}\n(src/pages 하위 경로와 .jsx 확장자를 확인해주세요)`);
                 return;
             }
         }
 
+        // 저장 전 데이터 가공 (모듈명 접두사 및 경로 형식 통일)
         const processRow = (row) => ({
             ...row,
             module: (row.module && !row.module.startsWith('module.'))
                 ? `module.${row.module}`
                 : row.module,
-            viewPath: (row.viewPath && !row.viewPath.startsWith('./pages/'))
-                ? `./pages/${row.viewPath.replace(/^\//, '')}`
-                : row.viewPath
+            viewPath: row.viewPath 
+                ? (row.viewPath.startsWith('./') ? row.viewPath : `./${row.viewPath.replace(/^\//, '')}`).replace('./pages/', './')
+                : ''
         });
 
         const processedInserts = inserts.map(processRow);
@@ -308,12 +353,44 @@ export function MenuManagement() {
             size: 1, 
             cell: ({ getValue }) => <span className="text-slate-400 font-medium">{getValue() || '자동 생성'}</span>
         },
-        { accessorKey: 'name', header: '메뉴명', size: 2, cell: (props) => Text(props) },
-        { accessorKey: 'path', header: '경로(URL)', size: 2, cell: (props) => Text(props) },
-        { accessorKey: 'viewPath', header: '화면경로', size: 2, cell: (props) => Text(props) },
-        { accessorKey: 'module', header: '모듈명', size: 1, cell: (props) => Text(props) },
-        { accessorKey: 'order', header: '정렬', size: 1, cell: (props) => Text(props) },
-        { accessorKey: 'useYn', header: '사용', size: 1, cell: (props) => Check(props) },
+        { accessorKey: 'name', header: '메뉴명', size: 1.5, cell: (props) => Text(props) },
+        { accessorKey: 'path', header: '경로(URL)', size: 1.5, cell: (props) => Text(props) },
+        { 
+            accessorKey: 'viewPath', 
+            header: '화면경로', 
+            size: 2, 
+            cell: ({ getValue, row, column, table }) => {
+                const onChange = async (e) => {
+                    const val = e.target.value;
+                    // 1. 화면경로 셀 업데이트
+                    table.options.meta?.updateData(row.index, column.id, val);
+                    
+                    // 2. 경로 선택 시 모듈명 자동 추출 및 입력
+                    if (val) {
+                        const moduleName = await getModuleNameFromPath(val);
+                        if (moduleName) {
+                            // 동일한 행의 'module' 컬럼 값을 자동으로 업데이트
+                            table.options.meta?.updateData(row.index, 'module', moduleName);
+                        }
+                    }
+                };
+                return (
+                    <div className="relative group">
+                        <input
+                            className="w-full h-7 bg-transparent outline-none px-1 text-xs focus:bg-white focus:ring-1 focus:ring-blue-400 rounded transition-all"
+                            value={getValue() || ''}
+                            onChange={onChange}
+                            list="viewPath-suggestions"
+                            placeholder="./pages/..."
+                        />
+                    </div>
+                );
+            }
+        },
+        { accessorKey: 'module', header: '모듈명', size: 1.5, cell: (props) => Text(props) },
+        { accessorKey: 'order', header: '정렬', size: 0.5, cell: (props) => Text(props) },
+        { accessorKey: 'useYn', header: '사용', size: 0.5, cell: (props) => Check(props) },
+        { accessorKey: 'popupYn', header: '팝업', size: 0.5, cell: (props) => Check(props) },
     ], []);
 
     // --- Recursive Tree Component ---
@@ -427,6 +504,7 @@ export function MenuManagement() {
                                         value={formData.viewPath} 
                                         onChange={(e) => onInputChange('viewPath', e.target.value)} 
                                         placeholder="예: sys/UserManagement.jsx"
+                                        list="viewPath-suggestions"
                                     />
                                 </div>
                                 <div>
@@ -462,6 +540,23 @@ export function MenuManagement() {
                                         </div>
                                     </RadioGroup>
                                 </div>
+                                <div>
+                                    <Label className="mb-1">새 창 열기 (팝업)</Label>
+                                    <RadioGroup 
+                                        value={formData.popupYn || "N"} 
+                                        onValueChange={(val) => onInputChange('popupYn', val)}
+                                        className="flex gap-4 mt-2"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="Y" id="popup_y" />
+                                            <Label htmlFor="popup_y">Y</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="N" id="popup_n" />
+                                            <Label htmlFor="popup_n">N</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -493,6 +588,12 @@ export function MenuManagement() {
                     )}
                 </div>
             </div>
+            {/* Autocomplete를 위한 공통 datalist (상단 폼 및 하단 그리드 공용) */}
+            <datalist id="viewPath-suggestions">
+                {pathSuggestions.map(path => (
+                    <option key={path} value={path} />
+                ))}
+            </datalist>
         </main>
     )
 }

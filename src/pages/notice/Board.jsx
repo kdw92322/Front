@@ -65,6 +65,7 @@ export function Board() {
             return;
         }
 
+        console.log('저장할 데이터:', editing); // 디버깅용 로그
         try {
             if (selectedId) {
                 await axios.put(`${API_BASE_URL}/board/update`, editing);
@@ -133,7 +134,7 @@ export function Board() {
                                 onChange={(e) => setFilter({...filter, category: e.target.value})}
                             >
                                 <option value="">전체</option>
-                                {categories.map(c => <option key={c.dtl_cd} value={c.dtl_cd}>{c.dtl_nm}</option>)}
+                                {categories.map(c => <option key={c.dtlCd} value={c.dtlCd}>{c.dtlNm}</option>)}
                             </select>
                         </div>
                         <div className="flex-1">
@@ -182,7 +183,7 @@ export function Board() {
                                     value={editing.category}
                                     onChange={(e) => setEditing({...editing, category: e.target.value})}
                                 >
-                                    {categories.map(c => <option key={c.dtl_cd} value={c.dtl_cd}>{c.dtl_nm}</option>)}
+                                    {categories.map(c => <option key={c.dtlCd} value={c.dtlCd}>{c.dtlNm}</option>)}
                                     {categories.length === 0 && <option value="GENERAL">일반</option>}
                                 </select>
                             </div>

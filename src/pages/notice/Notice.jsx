@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { API_BASE_URL } from '@/lib/config';
 import axios from '../../lib/axios';
 import GridTable from '@/components/layout/GridTable';
+import { IoClose } from 'react-icons/io5';
 
 export function Notice() {
     const [notices, setNotices] = useState([]);
@@ -15,13 +16,20 @@ export function Notice() {
     const [selectedId, setSelectedId] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    const fileInputRef = useRef(null);
+
+    // 로그인한 사용자 정보 가져오기
+    const loginId = localStorage.getItem('userId');
+
     const initForm = {
-        notice_id: '',
+        id: '',
         title: '',
         content: '',
-        author: '',
-        use_yn: 'Y',
-        reg_date: ''
+        writer: loginId,
+        useYn: 'Y',
+        regDate: '',
+        file: null,
+        fileName: ''
     };
     const [editing, setEditing] = useState(initForm);
 
@@ -44,6 +52,7 @@ export function Notice() {
     const onNewForm = () => {
         setEditing(initForm);
         setSelectedId(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const onSave = async () => {
@@ -52,11 +61,26 @@ export function Notice() {
             return;
         }
 
+        const formData = new FormData();
+        formData.append('title', editing.title);
+        formData.append('content', editing.content);
+        formData.append('writer', editing.writer);
+        formData.append('useYn', editing.useYn || 'Y');
+        
+        if (selectedId) formData.append('id', selectedId);
+        if (editing.file) {
+            formData.append('file', editing.file);
+        }
+
         try {
             if (selectedId) {
-                await axios.put(`${API_BASE_URL}/notice/update`, editing);
+                await axios.put(`${API_BASE_URL}/notice/update`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             } else {
-                await axios.post(`${API_BASE_URL}/notice/insert`, editing);
+                await axios.post(`${API_BASE_URL}/notice/insert`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             }
             alert('저장되었습니다.');
             search();
@@ -71,7 +95,7 @@ export function Notice() {
         if (!selectedId) return;
         if (window.confirm('선택한 공지사항을 삭제하시겠습니까?')) {
             try {
-                await axios.post(`${API_BASE_URL}/notice/delete`, { notice_id: selectedId });
+                await axios.post(`${API_BASE_URL}/notice/delete`, { id: selectedId });
                 alert('삭제되었습니다.');
                 search();
                 onNewForm();
@@ -81,16 +105,59 @@ export function Notice() {
         }
     };
 
-    const handleRowClick = (rowData) => {
-        setSelectedId(rowData.notice_id);
+    const onClearFile = () => {
+        setEditing(prev => ({
+            ...prev,
+            file: null,
+            file_name: ''
+        }));
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setEditing(prev => ({
+                ...prev,
+                file: file,
+                file_name: file.name
+            }));
+        }
+    };
+
+    const handleRowClick = async (rowData) => {
+        console.log(rowData);
+        setSelectedId(rowData.id);
         setEditing({ ...rowData });
+
+        try {
+            // 서버에 조회수 증가 요청 (API 엔드포인트는 백엔드 설계에 맞춰 조정 필요)
+            await axios.post(`${API_BASE_URL}/notice/updateViewCount`, { id: rowData.id });
+            
+            const updatedCount = (rowData.view_count || 0) + 1;
+
+            // 목록 상태 업데이트: 클릭한 행의 조회수를 1 증가시킴
+            setNotices(prev => prev.map(item => 
+                item.id === rowData.id 
+                ? { ...item, view_count: updatedCount } 
+                : item
+            ));
+            
+            // 상세 정보 상태(editing)에도 증가된 조회수 반영
+            setEditing(prev => ({ ...prev, view_count: updatedCount }));
+        } catch (error) {
+            console.error('조회수 증가 처리 중 오류:', error);
+        }
     };
 
     const columns = useMemo(() => [
-        { accessorKey: 'notice_id', header: '번호', size: 1 },
+        { accessorKey: 'id', header: '번호', size: 1 },
         { accessorKey: 'title', header: '제목', size: 5 },
-        { accessorKey: 'author', header: '작성자', size: 2 },
-        { accessorKey: 'reg_date', header: '작성일', size: 2 },
+        { accessorKey: 'writer', header: '작성자', size: 2 },
+        { accessorKey: 'createDt', header: '작성일', size: 2 },
+        { accessorKey: 'viewCount', header: '조회수', size: 2 },
     ], []);
 
     return (
@@ -137,7 +204,7 @@ export function Notice() {
                                 data={notices} 
                                 onRowClick={handleRowClick}
                                 selectedRowId={selectedId}
-                                rowKey="notice_id"
+                                rowKey="id"
                             />
                         </div>
                     </CardContent>
@@ -160,20 +227,42 @@ export function Notice() {
                             <div>
                                 <Label className="text-xs">작성자</Label>
                                 <Input 
-                                    value={editing.author} 
-                                    onChange={(e) => setEditing({...editing, author: e.target.value})}
+                                    className="bg-slate-50"
+                                    value={editing.writer} 
+                                    readOnly
+                                    disabled
                                 />
                             </div>
                             <div>
-                                <Label className="text-xs">사용 여부</Label>
-                                <RadioGroup 
-                                    value={editing.use_yn} 
-                                    onValueChange={(val) => setEditing({...editing, use_yn: val})}
-                                    className="flex gap-4 mt-2"
-                                >
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Y" id="use_y" /><Label htmlFor="use_y">사용</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="N" id="use_n" /><Label htmlFor="use_n">미사용</Label></div>
-                                </RadioGroup>
+                                <Label className="text-xs">첨부파일</Label>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <Input 
+                                            className="bg-slate-50 h-9 pr-8"
+                                            value={editing.file_name || ''} 
+                                            readOnly
+                                            placeholder="선택된 파일 없음"
+                                        />
+                                        {editing.file_name && (
+                                            <button
+                                                type="button"
+                                                onClick={onClearFile}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <IoClose size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <Button variant="outline" size="sm" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
+                                        파일 선택
+                                    </Button>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        className="hidden" 
+                                        onChange={handleFileChange} 
+                                    />
+                                </div>
                             </div>
                             <div className="col-span-2">
                                 <Label className="text-xs">내용</Label>
