@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom';
 import { FaUsers, FaKey, FaThList, FaChevronDown, FaChevronRight } from 'react-icons/fa'
-import axios from '@/lib/axios';
-import { API_BASE_URL } from '@/lib/config';
 import { getToken, getUserRole } from '@/lib/auth';
 
-export function Aside() {
+export function Aside({ allMenus }) {
   const [menuGroups, setMenuGroups] = useState([]);
   const [openGroups, setOpenGroups] = useState({});
+
+  useEffect(() => {
+    if (allMenus && allMenus.length > 0) {
+      const userRole = getUserRole();
+      const tree = buildMenuTree(allMenus, userRole);
+      setMenuGroups(tree);
+    }
+  }, [allMenus]);
+
   const toggleGroup = (groupKey) => {
     setOpenGroups((prev) => ({
       ...prev,
@@ -15,42 +22,49 @@ export function Aside() {
     }));
   };
 
-  useEffect(() => {
-    const fetchMenus = async () => {
-      const token = getToken();
-      const userRole = getUserRole(token);
-      if (!token) return;
+  // 윈도우 팝업창 열기 함수
+  const openPopup = (path) => {
+    const width = 1400; // 팝업 너비
+    const height = 900; // 팝업 높이
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,location=no`;
 
-      try {
-        const response = await axios.get(`${API_BASE_URL}/menu/select`, {
-          params: { role_id: userRole }
-        });
-        
-        let data = response.data || [];
-        // 전체 데이터를 buildMenuTree에 전달하고, 권한에 따른 필터링은 내부에서 처리
-        const tree = buildMenuTree(data, userRole);
-        setMenuGroups(tree);
-
-      } catch (error) {
-        console.error("메뉴 목록 로드 실패", error);
-      }
-    };
-
-    fetchMenus();
-  }, []);
+    // Check if the path is for an IETM layout
+    if (path.startsWith('/ietm')) {
+      // Open the IETMLayout route with the actual IETM content path as a query parameter
+      window.open(`/ietm-viewer?contentPath=${encodeURIComponent(path)}`, '_blank', windowFeatures);
+    } else {
+      window.open(path, '_blank', windowFeatures);
+    }
+  };
 
   const buildMenuTree = (flatMenus, userRole) => {
+    // 0. 권한 및 사용 여부 필터링 (App.jsx와 로직 동기화)
+    const filtered = flatMenus.filter(menu => {
+      if (menu.useYn === 'N') return false;
+      
+      if (userRole === 'ROLE_ADMIN' || userRole === 'admin') return true;
+      if (userRole === 'ROLE_USER') {
+        return !menu.viewPath?.includes('sys/');
+      }
+      if (userRole === 'ROLE_GUEST') {
+        return menu.path === '/main';
+      }
+      return true; 
+    });
+
     // 1. Root 메뉴 (상위 메뉴) 필터링 및 정렬
-    const roots = flatMenus
+    const roots = filtered
       .filter(m => m.parentcode === 'ROOT' || !m.parentcode)
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
     // 2. 각 Root 메뉴의 하위 메뉴 매핑
     return roots
       .map(root => {
-      const children = flatMenus
+      const children = filtered
         .filter(m => m.parentcode === root.code)
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
+        .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
       const formatUrl = (p) => {
         if (!p || p === '#') return '#';
@@ -65,7 +79,8 @@ export function Aside() {
         items: children.map(child => ({
           name: child.name,
           path: formatUrl(child.path),
-          code: child.code
+          code: child.code,
+          isPop: child.isPop
         }))
       };
       })
@@ -103,19 +118,30 @@ export function Aside() {
             }`}>
               {group.items.map((item, idx) => (
                 <li key={item.code || idx}>
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `flex items-center pl-8 pr-4 py-1.5 rounded-md text-xs transition-all ${
-                        isActive
-                          ? 'bg-blue-600 text-white font-medium'
-                          : 'text-slate-400 hover:bg-slate-700 hover:text-white'
-                      }`
-                    }
-                  >
-                    <span className="mr-3 opacity-30 text-xs">•</span>
-                    {item.name}
-                  </NavLink>
+                  {item.isPop === 'Y' ? (
+                    <button
+                      type="button"
+                      onClick={() => openPopup(item.path)}
+                      className="w-full flex items-center pl-8 pr-4 py-1.5 rounded-md text-xs transition-all text-slate-400 hover:bg-slate-700 hover:text-white text-left"
+                    >
+                      <span className="mr-3 opacity-30 text-xs">•</span>
+                      {item.name}
+                    </button>
+                  ) : (
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `flex items-center pl-8 pr-4 py-1.5 rounded-md text-xs transition-all ${
+                          isActive
+                            ? 'bg-blue-600 text-white font-medium'
+                            : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                        }`
+                      }
+                    >
+                      <span className="mr-3 opacity-30 text-xs">•</span>
+                      {item.name}
+                    </NavLink>
+                  )}
                 </li>
               ))}
             </ul>

@@ -13,7 +13,7 @@ export function MenuAuthManagement() {
     const [menus, setMenus] = useState([]);
     const [treeData, setTreeData] = useState([]);
     const [selectedRoleId, setSelectedRoleId] = useState(null);
-    const [authMap, setAuthMap] = useState({}); // { [menuCode]: { use_yn, r_yn, c_yn, d_yn } }
+    const [authMap, setAuthMap] = useState({});
     const [expanded, setExpanded] = useState({});
 
     useEffect(() => {
@@ -86,10 +86,10 @@ export function MenuAuthManagement() {
             const updateRecursive = (parentCode, isChecked) => {
                 menus.filter(m => m.parentcode === parentCode).forEach(child => {
                     nextMap[child.code] = {
-                        use_yn: isChecked,
-                        r_yn: isChecked,
-                        c_yn: isChecked,
-                        d_yn: isChecked
+                        useYn: isChecked,
+                        rYn: isChecked,
+                        cYn: isChecked,
+                        dYn: isChecked
                     };
                     updateRecursive(child.code, isChecked);
                 });
@@ -129,13 +129,12 @@ export function MenuAuthManagement() {
         const payload = Object.entries(authMap).map(([menuCode, auths]) => ({
             role_id: selectedRoleId,
             menu_code: menuCode,
-            use_yn: auths.use_yn ? 'Y' : 'N',
-            r_yn: auths.r_yn ? 'Y' : 'N',
-            c_yn: auths.c_yn ? 'Y' : 'N',
-            d_yn: auths.d_yn ? 'Y' : 'N'
+            useYn: auths.useYn ? 'Y' : 'N',
+            rYn: auths.rYn ? 'Y' : 'N',
+            cYn: auths.cYn ? 'Y' : 'N',
+            dYn: auths.dYn ? 'Y' : 'N'
         }));
-        console.log(payload);
-
+        
         try {
             await axios.post(`${API_BASE_URL}/menuAuth/update`, { role_id: selectedRoleId, auths: payload });
             alert('권한 설정이 저장되었습니다.');

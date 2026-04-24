@@ -74,7 +74,7 @@ export function MenuManagement() {
         module: "",
         order: 0,
         useYn: "",
-        popupYn: "N", // 새 창 열기 여부 추가
+        isPop: "N", // 새 창 열기 여부 추가
         remark: ""
     };
     const [formData, setFormData] = useState(initForm);
@@ -296,7 +296,10 @@ export function MenuManagement() {
             alert('변경사항이 없습니다.');
             return;
         }
-
+        
+        console.log(processedInserts);
+        console.log(processedUpdates);
+        
         try {
             // 일괄 저장 API 호출
             await axios.post(`${API_BASE_URL}/menu/save`, { 
@@ -306,7 +309,7 @@ export function MenuManagement() {
             });
             alert('하위 메뉴가 저장되었습니다.');
             //loadMenus(); // 전체 데이터 갱신
-            window.location.reload();
+            //window.location.reload();
         } catch (error) {
             console.error('그리드 저장 오류:', error);
             alert('저장 실패');
@@ -390,7 +393,7 @@ export function MenuManagement() {
         { accessorKey: 'module', header: '모듈명', size: 1.5, cell: (props) => Text(props) },
         { accessorKey: 'order', header: '정렬', size: 0.5, cell: (props) => Text(props) },
         { accessorKey: 'useYn', header: '사용', size: 0.5, cell: (props) => Check(props) },
-        { accessorKey: 'popupYn', header: '팝업', size: 0.5, cell: (props) => Check(props) },
+        { accessorKey: 'isPop', header: '팝업', size: 0.5, cell: (props) => Check(props) },
     ], []);
 
     // --- Recursive Tree Component ---
@@ -537,23 +540,6 @@ export function MenuManagement() {
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="N" id="use_n" />
                                             <Label htmlFor="use_n">미사용</Label>
-                                        </div>
-                                    </RadioGroup>
-                                </div>
-                                <div>
-                                    <Label className="mb-1">새 창 열기 (팝업)</Label>
-                                    <RadioGroup 
-                                        value={formData.popupYn || "N"} 
-                                        onValueChange={(val) => onInputChange('popupYn', val)}
-                                        className="flex gap-4 mt-2"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="Y" id="popup_y" />
-                                            <Label htmlFor="popup_y">Y</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="N" id="popup_n" />
-                                            <Label htmlFor="popup_n">N</Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
