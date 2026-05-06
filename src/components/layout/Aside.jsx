@@ -29,14 +29,16 @@ export function Aside({ allMenus }) {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
     const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,location=no`;
+    const windowName = 'IETMViewerPopup';
 
-    // Check if the path is for an IETM layout
+    let popup = null;
     if (path.startsWith('/ietm')) {
-      // Open the IETMLayout route with the actual IETM content path as a query parameter
-      window.open(`/ietm-viewer?contentPath=${encodeURIComponent(path)}`, '_blank', windowFeatures);
+      popup = window.open(`/ietm-viewer?contentPath=${encodeURIComponent(path)}`, windowName, windowFeatures);
     } else {
-      window.open(path, '_blank', windowFeatures);
+      popup = window.open(path, windowName, windowFeatures);
     }
+
+    if (popup) popup.focus();
   };
 
   const buildMenuTree = (flatMenus, userRole) => {

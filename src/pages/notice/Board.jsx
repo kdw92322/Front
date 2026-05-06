@@ -22,13 +22,13 @@ export function Board() {
     const loginId = localStorage.getItem('userId');
 
     const initForm = {
-        board_id: '',
+        boardId: '',
         category: 'GENERAL',
         title: '',
         content: '',
         author: loginId,
-        use_yn: 'Y',
-        reg_date: ''
+        useYn: 'Y',
+        regDate: ''
     };
     const [editing, setEditing] = useState(initForm);
 
@@ -85,7 +85,7 @@ export function Board() {
         if (!selectedId) return;
         if (window.confirm('선택한 게시글을 삭제하시겠습니까?')) {
             try {
-                await axios.post(`${API_BASE_URL}/board/delete`, { board_id: selectedId });
+                await axios.delete(`${API_BASE_URL}/board/delete`, { board_id: selectedId });
                 alert('삭제되었습니다.');
                 search();
                 onNewForm();
@@ -96,16 +96,16 @@ export function Board() {
     };
 
     const handleRowClick = (rowData) => {
-        setSelectedId(rowData.board_id);
+        setSelectedId(rowData.boardId);
         setEditing({ ...rowData });
     };
 
     const columns = useMemo(() => [
-        { accessorKey: 'board_id', header: '번호', size: 1 },
+        { accessorKey: 'boardId', header: '번호', size: 1 },
         { accessorKey: 'category', header: '분류', size: 1.5 },
         { accessorKey: 'title', header: '제목', size: 5 },
         { accessorKey: 'author', header: '작성자', size: 2 },
-        { accessorKey: 'reg_date', header: '작성일', size: 2 },
+        { accessorKey: 'regDate', header: '작성일', size: 2 },
     ], []);
 
     return (
@@ -163,7 +163,7 @@ export function Board() {
                                 data={boards} 
                                 onRowClick={handleRowClick}
                                 selectedRowId={selectedId}
-                                rowKey="board_id"
+                                rowKey="boardId"
                             />
                         </div>
                     </CardContent>
@@ -211,12 +211,18 @@ export function Board() {
                             <div className="col-span-2">
                                 <Label className="text-xs">사용 여부</Label>
                                 <RadioGroup 
-                                    value={editing.use_yn} 
-                                    onValueChange={(val) => setEditing({...editing, use_yn: val})}
-                                    className="flex gap-4 mt-2"
+                                    value={editing.useYn} 
+                                    onValueChange={(val) => setEditing({...editing, useYn: val})}
+                                    className="flex gap-6 mt-2"
                                 >
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Y" id="b_use_y" /><Label htmlFor="b_use_y">공개</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="N" id="b_use_n" /><Label htmlFor="b_use_n">비공개</Label></div>
+                                    <div className="flex items-center space-x-2 cursor-pointer">
+                                        <RadioGroupItem value="Y" id="b_use_y" />
+                                        <Label htmlFor="b_use_y" className="cursor-pointer">공개</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2 cursor-pointer">
+                                        <RadioGroupItem value="N" id="b_use_n" />
+                                        <Label htmlFor="b_use_n" className="cursor-pointer">비공개</Label>
+                                    </div>
                                 </RadioGroup>
                             </div>
                         </div>
